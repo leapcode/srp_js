@@ -29,9 +29,12 @@ def generate_fake_salt(I):
 def login_page(request):
     return HttpResponse("""<html>
  <head>
-    <script src="http://%s/srp-test/BigInt.js"></script>
-    <script src="http://%s/srp-test/SHA256.js"></script>
-    <script src="http://%s/srp-test/srp.js"></script>
+    <script src="http://%s/srp-test/javascript/SHA256.js"></script>
+    <script src="http://%s/srp-test/javascript/prng4.js"></script>
+    <script src="http://%s/srp-test/javascript/rng.js"></script>
+    <script src="http://%s/srp-test/javascript/jsbn.js"></script>
+    <script src="http://%s/srp-test/javascript/jsbn2.js"></script>
+    <script src="http://%s/srp-test/javascript/srp.js"></script>
     <script type="text/javascript">
         function srp_success()
         {
@@ -46,14 +49,17 @@ def login_page(request):
     <input type="submit"/>
     </form>
  </body>
-</html>""" % (request.get_host(), request.get_host(), request.get_host()))
+</html>""" % (request.get_host(), request.get_host(), request.get_host(),request.get_host(), request.get_host(), request.get_host()))
 
 def register_page(request):
     return HttpResponse("""<html>
  <head>
-    <script src="http://localhost/srp-test/BigInt.js"></script>
-    <script src="http://localhost/srp-test/SHA256.js"></script>
-    <script src="http://localhost/srp-test/srp.js"></script>
+    <script src="http://%s/srp-test/javascript/SHA256.js"></script>
+    <script src="http://%s/srp-test/javascript/prng4.js"></script>
+    <script src="http://%s/srp-test/javascript/rng.js"></script>
+    <script src="http://%s/srp-test/javascript/jsbn.js"></script>
+    <script src="http://%s/srp-test/javascript/jsbn2.js"></script>
+    <script src="http://%s/srp-test/javascript/srp.js"></script>
     <script type="text/javascript">
 function register()
 {
@@ -79,7 +85,7 @@ function srp_success()
     <input type="submit"/>
     </form>
  </body>
-</html>""")
+</html>""" % (request.get_host(), request.get_host(), request.get_host(),request.get_host(), request.get_host(), request.get_host()))
 
 ###
 ### User Registration

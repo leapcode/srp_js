@@ -17,12 +17,14 @@ var srp_K = null;
 var srp_M = null;
 var srp_M2 = null;
 var xhr;
+var rng;
+
 var srp_url = window.location.protocol+"//"+window.location.host+"/srp/";
 function srp_register()
 {
-    srp_N = str2bigInt(srp_Nstr, 16, 0);
-    srp_g = str2bigInt("2", 10, 0);
-    srp_k = str2bigInt("c46d46600d87fef149bd79b81119842f3c20241fda67d06ef412d8f6d9479c58", 16, 0);
+    srp_N = new BigInteger(srp_Nstr, 16); 
+    srp_g = new BigInteger("2");
+    srp_k = new BigInteger("c46d46600d87fef149bd79b81119842f3c20241fda67d06ef412d8f6d9479c58", 16);
     srp_I = document.getElementById("srp_username").value;
     srp_register_salt(srp_I);
     return false;
@@ -64,8 +66,8 @@ function srp_register_receive_salt()
 		{
 		    s = innerxml(xhr.responseXML.getElementsByTagName("salt")[0]);
 		    srp_x = srp_calculate_x(s);
-		    v = powMod(srp_g, srp_x, srp_N);
-		    srp_register_send_verifier(bigInt2str(v, 16));
+		    v = srp_g.modPow(srp_x, srp_N);
+		    srp_register_send_verifier(v.toString(16));
 		}
 		else if(xhr.responseXML.getElementsByTagName("error").length > 0)
 		{
@@ -115,15 +117,16 @@ function srp_register_user()
 };
 function srp_identify()
 {
-    srp_N = str2bigInt(srp_Nstr, 16, 0);
-    srp_g = str2bigInt("2", 10, 0);
-    srp_k = str2bigInt("c46d46600d87fef149bd79b81119842f3c20241fda67d06ef412d8f6d9479c58", 16, 0);
-    srp_a = randBigInt(32, 1);
+    srp_N = new BigInteger(srp_Nstr, 16);
+    srp_g = new BigInteger("2");
+    srp_k = new BigInteger("c46d46600d87fef149bd79b81119842f3c20241fda67d06ef412d8f6d9479c58", 16); 
+    rng = new SecureRandom();
+    srp_a = new BigInteger(32, rng);
     // A = g**a % N
-    srp_A = powMod(srp_g,srp_a,srp_N);
+    srp_A = srp_g.modPow(srp_a, srp_N); 
     srp_I = document.getElementById("srp_username").value;
 
-    srp_Astr = bigInt2str(srp_A, 16)
+    srp_Astr = srp_A.toString(16);
     // C -> S: A | I
     srp_send_identity(srp_Astr, srp_I);
     return false;
@@ -178,29 +181,28 @@ function srp_receive_salts()
 function srp_calculate_x(s)
 {
     var p = document.getElementById("srp_password").value;
-    return str2bigInt(SHA256(s + SHA256(srp_I + ":" + p)), 16, 0);
+    return new BigInteger(SHA256(s + SHA256(srp_I + ":" + p)), 16);
 };
 
 function srp_calculations(s, B)
-{
-    
+{    
     //S -> C: s | B
-    srp_B = str2bigInt(B, 16, 0);
+    srp_B = new BigInteger(B, 16); 
     srp_Bstr = B;
     // u = H(A,B)
-    srp_u = str2bigInt(SHA256(srp_Astr + srp_Bstr), 16, 0);    
+    srp_u = new BigInteger(SHA256(srp_Astr + srp_Bstr), 16); 
     // x = H(s, H(I:p))
     srp_x = srp_calculate_x(s);
     //S = (B - kg^x) ^ (a + ux)
-    var kgx = mult(srp_k, powMod(srp_g, srp_x, srp_N));
-    var aux = add(srp_a, mult(srp_u, srp_x));
-    srp_S = powMod(sub(srp_B, kgx), aux, srp_N);
+    var kgx = srp_k.multiply(srp_g.modPow(srp_x, srp_N));  
+    var aux = srp_a.add(srp_u.multiply(srp_x)); 
+    srp_S = srp_B.subtract(kgx).modPow(aux, srp_N); 
     // M = H(H(N) xor H(g), H(I), s, A, B, K)
-    var Mstr = bigInt2str(srp_A, 16) + bigInt2str(srp_B,16) + bigInt2str(srp_S,16);
+    var Mstr = srp_A.toString(16) + srp_B.toString(16) + srp_S.toString(16); 
     srp_M = SHA256(Mstr);
     srp_send_hash(srp_M);
     //M2 = H(A, M, K)
-    srp_M2 = SHA256(bigInt2str(srp_A, 16)+srp_M+bigInt2str(srp_S, 16));
+    srp_M2 = SHA256(srp_A.toString(16) + srp_M + srp_S.toString(16)); 
 };
 
 
