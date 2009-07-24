@@ -1,0 +1,19 @@
+###
+### Upgrade
+###
+
+# We would like people to be able to upgrade an existing system to use SRP, without losing their user database.
+# We can detect existing users who cannot authenticate with SRP because they will appear in the django.auth
+# table without appearing in the srp table. Ultimately, we would like to do this without the user sending his plaintext password.
+
+# The server sends the client its salt for the database password, along with the hash algorithm that was used to store it.
+# The client hashes the salt and password, and gets P = H(s,p). The client proceeds with SRP treating P as if it were
+# its secret password. The server can do the same thing, and confirm the user's password.
+
+def ugprade(request):
+    user = django.contrib.auth.models.User.objects.get(username=request.POST["I"])
+    shadowpass = user.password.split("$")
+    srpsalt = generate_salt()
+    algorithm = shadowpass[0]
+    shadowsalt = shadowpass[1]
+    passhash = shadowpass[2]
