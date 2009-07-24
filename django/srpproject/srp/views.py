@@ -12,7 +12,7 @@ from srp import models
 def generate_salt():
     import string, random   
     randomgen = random.SystemRandom()
-    salt_chars = "!@#$%^&*(),./?`~;:" + string.ascii_letters + string.digits
+    salt_chars = "./" + string.ascii_letters + string.digits
     return "".join([randomgen.choice(salt_chars) for i in range(0,16)])
 
 # We want to avoid information leakage. For users that don't exist, we need salts to be consistent.
@@ -22,7 +22,7 @@ def generate_salt():
 def generate_fake_salt(I):
     import string, random, settings, hashlib
     random.seed("%s:%s" % (I, settings.SECRET_KEY))
-    salt_chars = "!@#$%^&*(),./?`~;:" + string.ascii_letters + string.digits    
+    salt_chars = "./" + string.ascii_letters + string.digits    
     salt = "".join([random.choice(salt_chars) for i in range(0,16)])
     return salt, int(hashlib.sha256("%s:%s" % (salt, settings.SECRET_KEY)).hexdigest(), 16)
     
@@ -44,8 +44,10 @@ def login_page(request):
  </head>
  <body>
     <form action="." onsubmit="return srp_identify()">
-    Username: <input type="text" id="srp_username" /><br/>
-    Password: <input type="password" id="srp_password" /><br/>
+    <table>
+    <tr><td>Username:</td><td><input type="text" id="srp_username" /></td></tr>
+    <tr><td>Password:</td><td><input type="password" id="srp_password" /></td></tr>
+    </table>
     <input type="submit"/>
     </form>
  </body>
@@ -79,9 +81,11 @@ function srp_success()
  </head>
  <body>
     <form action="." onsubmit="return register()">
-    Username: <input type="text" id="srp_username" /><br/>
-    Password: <input type="password" id="srp_password" /><br/>
-    Password: <input type="password" id="confirm_password" /><br/>
+    <table>
+    <tr><td>Username:</td><td><input type="text" id="srp_username" /></td></tr>
+    <tr><td>Password:</td><td><input type="password" id="srp_password" /></td></tr>
+    <tr><td>Confirm:</td><td><input type="password" id="confirm_password" /></td></tr>
+    </table>
     <input type="submit"/>
     </form>
  </body>

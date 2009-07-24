@@ -29,12 +29,6 @@
  * and disclaimer.
  */
 
-Address all questions regarding this license to:
-
-  Tom Wu
-  tjw@cs.Stanford.EDU
-
-
 // Basic JavaScript BN library - subset useful for RSA encryption.
 
 // Bits per digit
