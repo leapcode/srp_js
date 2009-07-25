@@ -97,7 +97,7 @@ function SRP(username, password, ser, base_url)
         if(xhr.readyState == 4 && xhr.status == 200) {
 		    if(xhr.responseXML.getElementsByTagName("ok").length > 0)
 		    {
-		        this.identify();
+		        that.identify();
             }
         }
     };
@@ -124,7 +124,7 @@ function SRP(username, password, ser, base_url)
 		    {
 		        // This probably means A % N == 0, which means we need to generate
 	            // a new A and reidentify.
-                this.identify();
+                that.identify();
 		    }
 	    }
     };

@@ -79,7 +79,17 @@ function register()
     else if(document.getElementById("srp_password").value == "")
         alert("Password cannot be blank");
     else
-        srp_register();
+    {
+        var username = document.getElementById("srp_username").value;
+        var password = document.getElementById("srp_password").value;
+        var url = window.location.protocol+"//"+window.location.host+"/srp/";
+        srp = new SRP(username, password, "django", url);
+        srp.success = function()
+        {
+            alert("We win");
+        };
+        srp.register();
+    }
     return false;
 };
 function srp_success()
