@@ -22,6 +22,7 @@ function SRP(username, password, ser, base_url)
     var url = base_url;
     var server = ser;
     var that = this;
+    var authenticated = false;
     
     function paths(str)
     {
@@ -160,7 +161,10 @@ function SRP(username, password, ser, base_url)
             if(xhr.responseXML.getElementsByTagName("M").length > 0)
 		    {
 		        if(innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
+		        {
 		            that.success();
+	                authenticated = true;
+	            }
 		        else
 		            that.error_message("Server key does not match");
 		    }
@@ -170,6 +174,19 @@ function SRP(username, password, ser, base_url)
 		    }
         }
     };
+    this.key = function()
+    {
+        if(K == null)
+            if(authenticated)
+            {
+                K = SHA256(S);
+                return K;
+            }
+            else
+                that.error_message("User has not been authenticated.");
+        else
+            return K;
+    }
     this.success = function()
     {
         alert("Authentication successful.");

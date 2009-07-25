@@ -27,88 +27,12 @@ def generate_fake_salt(I):
     return salt, int(hashlib.sha256("%s:%s" % (salt, settings.SECRET_KEY)).hexdigest(), 16)
     
 def login_page(request):
-    return HttpResponse("""<html>
- <head>
-    <script src="http://%s/srp-test/javascript/SHA256.js"></script>
-    <script src="http://%s/srp-test/javascript/prng4.js"></script>
-    <script src="http://%s/srp-test/javascript/rng.js"></script>
-    <script src="http://%s/srp-test/javascript/jsbn.js"></script>
-    <script src="http://%s/srp-test/javascript/jsbn2.js"></script>
-    <script src="http://%s/srp-test/javascript/srp.js"></script>
-    <script type="text/javascript">
-    function login()
-    {
-        var username = document.getElementById("srp_username").value;
-        var password = document.getElementById("srp_password").value;
-        var url = window.location.protocol+"//"+window.location.host+"/srp/";
-        srp = new SRP(username, password, "django", url);
-        srp.success = function()
-        {
-            alert("We win");
-        };
-        srp.identify();
-        return false;
-    }
-    </script>
- </head>
- <body>
-    <form action="." onsubmit="return login()">
-    <table>
-    <tr><td>Username:</td><td><input type="text" id="srp_username" /></td></tr>
-    <tr><td>Password:</td><td><input type="password" id="srp_password" /></td></tr>
-    </table>
-    <input type="submit"/>
-    </form>
- </body>
-</html>""" % (request.get_host(), request.get_host(), request.get_host(),request.get_host(), request.get_host(), request.get_host()))
+    from django.shortcuts import render_to_response
+    return render_to_response('login.html',{'static_files': "http://%s/srp-test/javascript" % request.get_host()})
 
 def register_page(request):
-    return HttpResponse("""<html>
- <head>
-    <script src="http://%s/srp-test/javascript/SHA256.js"></script>
-    <script src="http://%s/srp-test/javascript/prng4.js"></script>
-    <script src="http://%s/srp-test/javascript/rng.js"></script>
-    <script src="http://%s/srp-test/javascript/jsbn.js"></script>
-    <script src="http://%s/srp-test/javascript/jsbn2.js"></script>
-    <script src="http://%s/srp-test/javascript/srp.js"></script>
-    <script type="text/javascript">
-function register()
-{
-    if(document.getElementById("confirm_password").value != document.getElementById("srp_password").value)
-        alert("Passwords do not match");
-    else if(document.getElementById("srp_password").value == "")
-        alert("Password cannot be blank");
-    else
-    {
-        var username = document.getElementById("srp_username").value;
-        var password = document.getElementById("srp_password").value;
-        var url = window.location.protocol+"//"+window.location.host+"/srp/";
-        srp = new SRP(username, password, "django", url);
-        srp.success = function()
-        {
-            alert("We win");
-        };
-        srp.register();
-    }
-    return false;
-};
-function srp_success()
-{
-    alert("Authentication successful.");
-};
-    </script>
- </head>
- <body>
-    <form action="." onsubmit="return register()">
-    <table>
-    <tr><td>Username:</td><td><input type="text" id="srp_username" /></td></tr>
-    <tr><td>Password:</td><td><input type="password" id="srp_password" /></td></tr>
-    <tr><td>Confirm:</td><td><input type="password" id="confirm_password" /></td></tr>
-    </table>
-    <input type="submit"/>
-    </form>
- </body>
-</html>""" % (request.get_host(), request.get_host(), request.get_host(),request.get_host(), request.get_host(), request.get_host()))
+    from django.shortcuts import render_to_response
+    return render_to_response('register.html',{'static_files': "http://%s/srp-test/javascript" % request.get_host()})
 
 ###
 ### User Registration
