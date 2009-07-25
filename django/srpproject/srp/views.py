@@ -36,14 +36,23 @@ def login_page(request):
     <script src="http://%s/srp-test/javascript/jsbn2.js"></script>
     <script src="http://%s/srp-test/javascript/srp.js"></script>
     <script type="text/javascript">
-        function srp_success()
+    function login()
+    {
+        var username = document.getElementById("srp_username").value;
+        var password = document.getElementById("srp_password").value;
+        var url = window.location.protocol+"//"+window.location.host+"/srp/";
+        srp = new SRP(username, password, "django", url);
+        srp.success = function()
         {
-            alert("Authentication successful.");
-        }
+            alert("We win");
+        };
+        srp.identify();
+        return false;
+    }
     </script>
  </head>
  <body>
-    <form action="." onsubmit="return srp_identify()">
+    <form action="." onsubmit="return login()">
     <table>
     <tr><td>Username:</td><td><input type="text" id="srp_username" /></td></tr>
     <tr><td>Password:</td><td><input type="password" id="srp_password" /></td></tr>
