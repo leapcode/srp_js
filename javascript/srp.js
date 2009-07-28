@@ -35,20 +35,17 @@ function SRP(username, password, ser, base_url)
     };
     function ajaxRequest(full_url, params, callback)
     {
-        if(!xhr)
+        if( window.XMLHttpRequest)
+            xhr = new XMLHttpRequest();
+        else if (window.ActiveXObject){
+            try{
+                xhr = new ActiveXObject("Microsoft.XMLHTTP");
+            }catch (e){}
+        }
+        else
         {
-            if( window.XMLHttpRequest)
-                xhr = new XMLHttpRequest();
-            else if (window.ActiveXObject){
-                try{
-                    xhr = new ActiveXObject("Microsoft.XMLHTTP");
-                }catch (e){}
-            }
-            else
-            {
-                that.error_message("Ajax not supported.");
-                return;
-            }
+            that.error_message("Ajax not supported.");
+            return;
         }
         if(xhr){
             xhr.onreadystatechange = callback;
@@ -56,7 +53,6 @@ function SRP(username, password, ser, base_url)
             xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhr.setRequestHeader("Content-length", params.length);
             xhr.setRequestHeader("Connection", "close");
-            
             xhr.send(params);
         }
         else
@@ -145,9 +141,9 @@ function SRP(username, password, ser, base_url)
         // M = H(H(N) xor H(g), H(I), s, A, B, K)
         var Mstr = A.toString(16) + B.toString(16) + S.toString(16); 
         M = SHA256(Mstr);
+        M2 = SHA256(A.toString(16) + M + S.toString(16)); 
         send_hash(M);
         //M2 = H(A, M, K)
-        M2 = SHA256(A.toString(16) + M + S.toString(16)); 
     };
     function send_hash(M)
     {
