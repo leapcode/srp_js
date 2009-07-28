@@ -32,7 +32,7 @@ function SRP(username, password, ser, base_url)
         {
             return str;
         }
-    }
+    };
     function ajaxRequest(full_url, params, callback)
     {
         if(!xhr)
@@ -63,7 +63,7 @@ function SRP(username, password, ser, base_url)
         {
             that.error_message("Ajax failed.");
         }        
-    }
+    };
     
     this.register = function()
     {
@@ -186,7 +186,7 @@ function SRP(username, password, ser, base_url)
                 that.error_message("User has not been authenticated.");
         else
             return K;
-    }
+    };
     this.success = function()
     {
         alert("Authentication successful.");

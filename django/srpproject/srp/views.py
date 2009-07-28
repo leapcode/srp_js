@@ -116,6 +116,7 @@ def verify(request):
             response = "<M>%s</M>" % hashlib.sha256("%s%s%s" % (request.session["srp_A"], request.session["srp_M"], request.session["srp_S"])).hexdigest()
             auth.login(request, user)
         else:
+            # This should only happen when authentication is successful with SRP, but the user isn't in the auth table.
             response = "<error>Authentication failed. This is likely a server problem.</error>"
     else:
         response = "<error>Invalid username or password.</error>"
