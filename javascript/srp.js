@@ -23,6 +23,7 @@ function SRP(username, password, ser, base_url)
     var server = ser;
     var that = this;
     var authenticated = false;
+    var hash_import = false;
     
     function paths(str)
     {
@@ -170,6 +171,15 @@ function SRP(username, password, ser, base_url)
 		    }
         }
     };
+    function import_hashes()
+    {
+        if(that.isdefined("SHA1") && that.isdefined("MD5")) return;
+        var scriptElt = document.createElement('script');
+        scriptElt.type = 'text/javascript';
+        var arr=srpPath.split("/");
+        scriptElt.src = arr.slice(0, arr.length-1).join("/")+"/hash.min.js";
+        document.getElementsByTagName('head')[0].appendChild(scriptElt);
+    }
     this.key = function()
     {
         if(K == null)
@@ -190,5 +200,9 @@ function SRP(username, password, ser, base_url)
     this.error_message = function(t)
     {
         alert(t);
+    };
+    this.isdefined = function ( variable)
+    {
+        return (typeof(window[variable]) == "undefined")?  false: true;
     };
 };
