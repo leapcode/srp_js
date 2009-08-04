@@ -159,6 +159,7 @@ function SRP(username, password, ser, base_url)
 		    {
 		        if(innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
 		        {
+                    import_hashes();
 		            that.success();
 	                authenticated = true;
 	            }
@@ -174,11 +175,27 @@ function SRP(username, password, ser, base_url)
     function import_hashes()
     {
         if(that.isdefined("SHA1") && that.isdefined("MD5")) return;
-        var scriptElt = document.createElement('script');
-        scriptElt.type = 'text/javascript';
         var arr=srpPath.split("/");
-        scriptElt.src = arr.slice(0, arr.length-1).join("/")+"/hash.min.js";
-        document.getElementsByTagName('head')[0].appendChild(scriptElt);
+        var path = arr.slice(0, arr.length-1).join("/");
+        if(arr[arr.length-1] == "srp.min.js")
+        {
+            var scriptElt = document.createElement('script');
+            scriptElt.type = 'text/javascript';
+            scriptElt.src = path+"/hash.min.js";
+            document.getElementsByTagName('head')[0].appendChild(scriptElt);
+        }
+        else
+        {
+            var scriptElt = document.createElement('script');
+            scriptElt.type = 'text/javascript';
+            scriptElt.src = path +"/MD5.js";
+            document.getElementsByTagName('head')[0].appendChild(scriptElt);
+            scriptElt = document.createElement('script');
+            scriptElt.type = 'text/javascript';
+            scriptElt.src = path +"/SHA1.js";
+            document.getElementsByTagName('head')[0].appendChild(scriptElt);
+        }
+        
     }
     this.key = function()
     {
