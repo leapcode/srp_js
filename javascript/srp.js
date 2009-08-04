@@ -183,7 +183,6 @@ function SRP(username, password, ser, base_url)
 		    {
 		        if(innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
 		        {
-                    alert(that.srpPath);
 		            that.success();
 	                authenticated = true;
 	            }
