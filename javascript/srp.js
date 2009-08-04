@@ -206,3 +206,4 @@ function SRP(username, password, ser, base_url)
         return (typeof(window[variable]) == "undefined")?  false: true;
     };
 };
+var srpPath = document.getElementsByTagName('script')[document.getElementsByTagName('script').length-1].getAttribute("src");
