@@ -1,5 +1,6 @@
 function SRP(username, password, ser, base_url)
 {
+    // Variables that will be used in the SRP protocol
     var Nstr = "115b8b692e0e045692cf280b436735c77a5a9e8a9e7ed56c965f87db5b2a2ece3";
     var N = new BigInteger(Nstr, 16);
     var g = new BigInteger("2");
@@ -34,6 +35,8 @@ function SRP(username, password, ser, base_url)
             return str;
         }
     };
+    // Perform ajax requests at the specified url, with the specified parameters
+    // Calling back the specified function.
     function ajaxRequest(full_url, params, callback)
     {
         if( window.XMLHttpRequest)
@@ -61,13 +64,28 @@ function SRP(username, password, ser, base_url)
             that.error_message("Ajax failed.");
         }        
     };
-    
+
+    // Get the text content of an XML node
+    function innerxml (node)
+    {
+        return node.firstChild.nodeValue;
+    };
+
+    // Check whether or not a variable is defined
+    function isdefined ( variable)
+    {
+        return (typeof(window[variable]) != "undefined");
+    };
+
+    // Initiate the registration process
     this.register = function()
     {
         var handshake_url = url + paths("register/salt/");
         var params = "I="+I;
         ajaxRequest(handshake_url, params, register_receive_salt);
     };
+
+    // Receive the salt for registration
     function register_receive_salt()
     {
         if(xhr.readyState == 4 && xhr.status == 200) {
@@ -84,12 +102,14 @@ function SRP(username, password, ser, base_url)
 	        }
         }
     };
+    // Send the verifier to the server
     function register_send_verifier(v)
     {
         var params = "v="+v;
         var auth_url = url + paths("register/user/");
         ajaxRequest(auth_url, params, register_user);
     };
+    // The user has been registered successfully, now login
     function register_user()
     {
         if(xhr.readyState == 4 && xhr.status == 200) {
@@ -100,16 +120,15 @@ function SRP(username, password, ser, base_url)
         }
     };
     
-    function innerxml (node)
-    {
-        return node.firstChild.nodeValue;
-    };
+    // Start the login process by identifying the user
     this.identify = function()
     {
         var handshake_url = url + paths("handshake/");
         var params = "I="+I+"&A="+Astr;
         ajaxRequest(handshake_url, params, receive_salts);
     };
+
+    // Receive login salts from the server, start calculations
     function receive_salts()
     {
         if(xhr.readyState == 4 && xhr.status == 200) {
@@ -126,6 +145,8 @@ function SRP(username, password, ser, base_url)
 		    }
 	    }
     };
+
+    // Calculate S, M, and M2
     function calculations(s, ephemeral)
     {    
         //S -> C: s | B
@@ -146,12 +167,15 @@ function SRP(username, password, ser, base_url)
         send_hash(M);
         //M2 = H(A, M, K)
     };
+
+    // Send M to the server
     function send_hash(M)
     {
         var params = "M="+M;
         var auth_url = url+paths("authenticate/");
         ajaxRequest(auth_url, params, confirm_authentication);
     };
+    // Receive M2 from the server and verify it
     function confirm_authentication()
     {
         if(xhr.readyState == 4 && xhr.status == 200) {
@@ -159,7 +183,7 @@ function SRP(username, password, ser, base_url)
 		    {
 		        if(innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
 		        {
-                    import_hashes();
+                    alert(that.srpPath);
 		            that.success();
 	                authenticated = true;
 	            }
@@ -172,11 +196,15 @@ function SRP(username, password, ser, base_url)
 		    }
         }
     };
+    // If we need SHA1 or MD5, we need to load the javascript files
     function import_hashes()
     {
+        // First check that the functions aren't already loaded
         if(that.isdefined("SHA1") && that.isdefined("MD5")) return;
-        var arr=srpPath.split("/");
+        // Get the directory that this javascript file was loaded from
+        var arr=that.srpPath.split("/");
         var path = arr.slice(0, arr.length-1).join("/");
+        // If this file is called srp.min.js, we will load the packed hash file
         if(arr[arr.length-1] == "srp.min.js")
         {
             var scriptElt = document.createElement('script');
@@ -184,6 +212,7 @@ function SRP(username, password, ser, base_url)
             scriptElt.src = path+"/hash.min.js";
             document.getElementsByTagName('head')[0].appendChild(scriptElt);
         }
+        // Otherwise, this file is presumably srp.js, and we will load individual hash files
         else
         {
             var scriptElt = document.createElement('script');
@@ -197,6 +226,8 @@ function SRP(username, password, ser, base_url)
         }
         
     }
+    // If someone wants to use the session key for encrypting traffic, they can
+    // access the key with this function.
     this.key = function()
     {
         if(K == null)
@@ -210,17 +241,22 @@ function SRP(username, password, ser, base_url)
         else
             return K;
     };
+
+    // This function is called when authentication is successful.
+    // Developers can set this to other functions in specific implementations
+    // and change the functionality.
     this.success = function()
     {
         alert("Authentication successful.");
     };
+    // If an error occurs, raise it as an alert.
+    // Developers can set this to an alternative function to handle erros differently.
     this.error_message = function(t)
     {
         alert(t);
     };
-    this.isdefined = function ( variable)
-    {
-        return (typeof(window[variable]) == "undefined")?  false: true;
-    };
 };
-var srpPath = document.getElementsByTagName('script')[document.getElementsByTagName('script').length-1].getAttribute("src");
+// This line is run while the document is loading
+// It gets a list of all <script> tags and finds the last instance.
+// The path to this script is the "src" attribute of that tag.
+SRP.prototype.srpPath = document.getElementsByTagName('script')[document.getElementsByTagName('script').length-1].getAttribute("src");
