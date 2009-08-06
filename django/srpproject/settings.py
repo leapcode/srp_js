@@ -78,3 +78,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'srpproject.srp'
 )
+
+AUTHENTICATION_BACKENDS = (
+    'srp.backends.SRPBackend',
+)

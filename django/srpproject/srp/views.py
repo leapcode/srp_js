@@ -41,7 +41,7 @@ def register_page(request):
 # Step 1. A client submits a username. If the username is available, we generate a salt, store it, and return it.
 # Otherwise, we return an error.
 def register_salt(request):
-    if models.User.objects.filter(name=request.POST["I"]).count() > 0:
+    if models.SRPUser.objects.filter(username=request.POST["I"]).count() > 0:
         return HttpResponse("<error>Username already in use</error>", mimetype="text/xml")
     request.session["srp_name"] = request.POST["I"]
     request.session["srp_salt"] = generate_salt()
@@ -50,8 +50,8 @@ def register_salt(request):
 # Step 2. The client creates the password verifier and sends it to the server, along with a username.
 def register_user(request):
     from django.contrib import auth
-    models.User(salt=request.session["srp_salt"], name=request.session["srp_name"], verifier=request.POST["v"]).save()
-    auth.models.User.objects.create_user(request.session["srp_name"],'', str(request.POST["v"]))
+    models.SRPUser(salt=request.session["srp_salt"], username=request.session["srp_name"], verifier=request.POST["v"]).save()
+    # auth.models.SRPUser.objects.create_user(request.session["srp_name"],'', str(request.POST["v"]))
     del request.session["srp_salt"]
     del request.session["srp_name"]
     return HttpResponse("<ok/>", mimetype="text/xml");
@@ -77,15 +77,13 @@ def handshake(request):
         return HttpResponse("<error>Invalid ephemeral key.</error>", mimetype="text/xml")
     else:
         try:
-            user = models.User.objects.get(name=request.session["srp_I"])
+            user = models.SRPUser.objects.get(username=request.session["srp_I"])
             salt = user.salt
             v = int(user.verifier, 16)
         # We don't want to leak that the username doesn't exist. Make up a fake salt and verifier.
-        except models.User.DoesNotExist:
+        except models.SRPUser.DoesNotExist:
             salt, x = generate_fake_salt(request.POST["I"])
             v = pow(g, x, N)
-            
-        request.session["srp_v"] = hex(v)[2:-1]
 
         # Ensure that B%N != 0
         while True:
@@ -108,21 +106,21 @@ def handshake(request):
 # Step 2: The client sends its proof of S. The server confirms, and sends its proof of S.    
 def verify(request):
     import hashlib
-    from django.contrib import auth
-    if request.POST["M"] == request.session["srp_M"]:
-        # H(A, M, K)
-        user = auth.authenticate(username=request.session["srp_I"], password=str(request.session["srp_v"]))
-        if user != None:
+    from django.contrib.auth import login, authenticate
+    # H(A, M, K)
+    try:
+        user = authenticate(username=request.session["srp_I"], M=(request.POST["M"], request.session["srp_M"]))
+        if user:
             response = "<M>%s</M>" % hashlib.sha256("%s%s%s" % (request.session["srp_A"], request.session["srp_M"], request.session["srp_S"])).hexdigest()
-            auth.login(request, user)
+            login(request, user)
         else:
-            # This should only happen when authentication is successful with SRP, but the user isn't in the auth table.
-            response = "<error>Authentication failed. This is likely a server problem.</error>"
-    else:
-        response = "<error>Invalid username or password.</error>"
+            response = "<error>Invalid username or password.</error>"
+    except models.SRPUser.DoesNotExist:
+        # This should only happen when authentication is successful with SRP, but the user isn't in the auth table.
+        response = "<error>Authentication failed. This is likely a server problem.</error>"
+
     try:
         del request.session["srp_I"]
-        del request.session["srp_v"]
         del request.session["srp_M"]
         del request.session["srp_S"]
         del request.session["srp_A"]
