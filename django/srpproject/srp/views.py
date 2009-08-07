@@ -51,7 +51,6 @@ def register_salt(request):
 def register_user(request):
     from django.contrib import auth
     models.SRPUser(salt=request.session["srp_salt"], username=request.session["srp_name"], verifier=request.POST["v"]).save()
-    # auth.models.SRPUser.objects.create_user(request.session["srp_name"],'', str(request.POST["v"]))
     del request.session["srp_salt"]
     del request.session["srp_name"]
     return HttpResponse("<ok/>", mimetype="text/xml");
@@ -107,7 +106,6 @@ def handshake(request):
 def verify(request):
     import hashlib
     from django.contrib.auth import login, authenticate
-    # H(A, M, K)
     try:
         user = authenticate(username=request.session["srp_I"], M=(request.POST["M"], request.session["srp_M"]))
         if user:

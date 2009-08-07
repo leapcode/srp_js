@@ -11,21 +11,46 @@ function SRP(username, password, ser, base_url)
     var Astr = A.toString(16);
     var B = null;
     var Bstr = null;
-    var I = username;
     var u = null;
-    var p = password;
     var x = null;
     var S = null;
     var K = null;
     var M = null;
     var M2 = null;
-    var xhr = null;
     var url = base_url;
     var server = ser;
     var that = this;
     var authenticated = false;
     var hash_import = false;
-    
+    var I = username;
+    var p = password;
+    var xhr = null;
+
+    this.getI = function()
+    {
+        return I;
+    };
+    this.getxhr = function()
+    {
+        return xhr;
+    };
+    this.geturl = function()
+    {
+        return url;
+    };
+    this.getg = function()
+    {
+        return g;
+    };
+    this.getN = function()
+    {
+        return N;
+    };
+    this.calcX = function(s)
+    {
+        return new BigInteger(SHA256(s + SHA256(I + ":" + p)), 16);
+    };
+
     function paths(str)
     {
         // For now, str will be the django path
@@ -35,9 +60,10 @@ function SRP(username, password, ser, base_url)
             return str;
         }
     };
+    this.paths = paths;
     // Perform ajax requests at the specified url, with the specified parameters
     // Calling back the specified function.
-    function ajaxRequest(full_url, params, callback)
+    this.ajaxRequest = function(full_url, params, callback)
     {
         if( window.XMLHttpRequest)
             xhr = new XMLHttpRequest();
@@ -66,7 +92,7 @@ function SRP(username, password, ser, base_url)
     };
 
     // Get the text content of an XML node
-    function innerxml (node)
+    this.innerxml = function(node)
     {
         return node.firstChild.nodeValue;
     };
@@ -75,57 +101,13 @@ function SRP(username, password, ser, base_url)
     function isdefined ( variable)
     {
         return (typeof(window[variable]) != "undefined");
-    };
-
-    // Initiate the registration process
-    this.register = function()
-    {
-        var handshake_url = url + paths("register/salt/");
-        var params = "I="+I;
-        ajaxRequest(handshake_url, params, register_receive_salt);
-    };
-
-    // Receive the salt for registration
-    function register_receive_salt()
-    {
-        if(xhr.readyState == 4 && xhr.status == 200) {
-	        if(xhr.responseXML.getElementsByTagName("salt").length > 0)
-	        {
-	            var s = innerxml(xhr.responseXML.getElementsByTagName("salt")[0]);
-	            x = new BigInteger(SHA256(s + SHA256(I + ":" + p)), 16);
-	            var v = g.modPow(x, N);
-	            register_send_verifier(v.toString(16));
-	        }
-	        else if(xhr.responseXML.getElementsByTagName("error").length > 0)
-	        {
-	            that.error_message(innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
-	        }
-        }
-    };
-    // Send the verifier to the server
-    function register_send_verifier(v)
-    {
-        var params = "v="+v;
-        var auth_url = url + paths("register/user/");
-        ajaxRequest(auth_url, params, register_user);
-    };
-    // The user has been registered successfully, now login
-    function register_user()
-    {
-        if(xhr.readyState == 4 && xhr.status == 200) {
-		    if(xhr.responseXML.getElementsByTagName("ok").length > 0)
-		    {
-		        that.identify();
-            }
-        }
-    };
-    
+    };    
     // Start the login process by identifying the user
     this.identify = function()
     {
         var handshake_url = url + paths("handshake/");
         var params = "I="+I+"&A="+Astr;
-        ajaxRequest(handshake_url, params, receive_salts);
+        that.ajaxRequest(handshake_url, params, receive_salts);
     };
 
     // Receive login salts from the server, start calculations
@@ -173,7 +155,7 @@ function SRP(username, password, ser, base_url)
     {
         var params = "M="+M;
         var auth_url = url+paths("authenticate/");
-        ajaxRequest(auth_url, params, confirm_authentication);
+        that.ajaxRequest(auth_url, params, confirm_authentication);
     };
     // Receive M2 from the server and verify it
     function confirm_authentication()
@@ -181,7 +163,7 @@ function SRP(username, password, ser, base_url)
         if(xhr.readyState == 4 && xhr.status == 200) {
             if(xhr.responseXML.getElementsByTagName("M").length > 0)
 		    {
-		        if(innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
+		        if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
 		        {
 		            that.success();
 	                authenticated = true;
@@ -191,9 +173,17 @@ function SRP(username, password, ser, base_url)
 		    }
 		    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
 		    {
-		        that.error_message(innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
+		        that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
 		    }
         }
+    };
+    function import_file(fname)
+    {
+        var scriptElt = document.createElement('script');
+        scriptElt.type = 'text/javascript';
+        scriptElt.src = fname;
+        document.getElementsByTagName('head')[0].appendChild(scriptElt);
+        
     };
     // If we need SHA1 or MD5, we need to load the javascript files
     function import_hashes()
@@ -205,25 +195,13 @@ function SRP(username, password, ser, base_url)
         var path = arr.slice(0, arr.length-1).join("/");
         // If this file is called srp.min.js, we will load the packed hash file
         if(arr[arr.length-1] == "srp.min.js")
-        {
-            var scriptElt = document.createElement('script');
-            scriptElt.type = 'text/javascript';
-            scriptElt.src = path+"/hash.min.js";
-            document.getElementsByTagName('head')[0].appendChild(scriptElt);
-        }
+            import_file(path+"/hash.min.js");
         // Otherwise, this file is presumably srp.js, and we will load individual hash files
         else
         {
-            var scriptElt = document.createElement('script');
-            scriptElt.type = 'text/javascript';
-            scriptElt.src = path +"/MD5.js";
-            document.getElementsByTagName('head')[0].appendChild(scriptElt);
-            scriptElt = document.createElement('script');
-            scriptElt.type = 'text/javascript';
-            scriptElt.src = path +"/SHA1.js";
-            document.getElementsByTagName('head')[0].appendChild(scriptElt);
-        }
-        
+            import_file(path+"/MD5.js");
+            import_file(path+"/SHA1.js");
+        }        
     }
     // If someone wants to use the session key for encrypting traffic, they can
     // access the key with this function.
