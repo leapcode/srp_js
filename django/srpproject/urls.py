@@ -21,4 +21,6 @@ urlpatterns = patterns('',
     (r'^srp/authenticate/$', views.verify),
     (r'^srp/login/$', views.login_page),
     (r'^srp/register/$', views.register_page),
+    (r'^srp/upgrade/authenticate/$', views.upgrade_auth),
+    (r'^srp/upgrade/verifier/$', views.upgrade_add_verifier),
 )

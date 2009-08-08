@@ -19,6 +19,3 @@ class SRPBackend:
             return SRPUser.objects.get(pk=user_id)
         except SRPUser.DoesNotExist:
             return None
-
-
-

@@ -17,6 +17,7 @@ function SRP(username, password, ser, base_url)
     var K = null;
     var M = null;
     var M2 = null;
+    var salt = null;
     var url = base_url;
     var server = ser;
     var that = this;
@@ -48,7 +49,11 @@ function SRP(username, password, ser, base_url)
     };
     this.calcX = function(s)
     {
-        return new BigInteger(SHA256(s + SHA256(I + ":" + p)), 16);
+        return that.calcXp(s, p);
+    };
+    this.calcXp = function(s, ph)
+    {
+        return new BigInteger(SHA256(s + SHA256(I + ":" + ph)), 16);
     };
 
     function paths(str)
@@ -117,7 +122,15 @@ function SRP(username, password, ser, base_url)
 		    if(xhr.responseXML.getElementsByTagName("r").length > 0)
 		    {
 		        var response = xhr.responseXML.getElementsByTagName("r")[0];
-		        calculations(response.getAttribute("s"), response.getAttribute("B"));
+                if(!response.getAttribute("a"))
+                {
+		            calculations(response.getAttribute("s"), response.getAttribute("B"), p);
+                    send_hash(M, confirm_authentication, url+paths("authenticate/"));
+                }
+                else
+                {
+                    upgrade(response.getAttribute("s"), response.getAttribute("B"), response.getAttribute("a"), response.getAttribute("d"));
+                }
 		    }
 		    else if(xhr.responseXML.getElementsByTagName("error").length > 0)
 		    {
@@ -127,9 +140,56 @@ function SRP(username, password, ser, base_url)
 		    }
 	    }
     };
-
+    function upgrade(s,ephemeral,algo,dsalt)
+    {
+        import_hashes();
+        function do_upgrade()
+        {
+            // If sha1 and md5 are still undefined, sleep again
+            if(!isdefined("SHA1") || !isdefined("MD5"))
+            {
+                window.setTimeout(do_upgrade, 10);
+                return;
+            }
+            if(algo == "sha1")
+                hashfun = SHA1;
+            else if(algo == "md5")
+                hashfun = MD5;
+            calculations(s, ephemeral, hashfun(dsalt+p));
+            salt = s;
+            send_hash(M, confirm_upgrade, url+paths("upgrade/authenticate/"));
+        };
+        window.setTimeout(do_upgrade,10);
+    };
+    function confirm_upgrade()
+    {
+        if(xhr.readyState == 4 && xhr.status == 200) {
+            if(xhr.responseXML.getElementsByTagName("M").length > 0)
+		    {
+		        if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
+		        {
+                    var params = "p="+p;
+                    var auth_url = that.geturl() + that.paths("upgrade/verifier/");
+                    that.ajaxRequest(auth_url, params, confirm_verifier);
+	            }
+		        else
+		            that.error_message("Server key does not match");
+		    }
+		    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
+		    {
+		        that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
+		    }
+        }
+    };
+    function confirm_verifier()
+    {
+        if(xhr.readyState == 4 && xhr.status == 200) {
+            if(xhr.responseXML.getElementsByTagName("ok").length > 0)
+                that.identify();
+        }
+    };
     // Calculate S, M, and M2
-    function calculations(s, ephemeral)
+    function calculations(s, ephemeral, pass)
     {    
         //S -> C: s | B
         B = new BigInteger(ephemeral, 16); 
@@ -137,7 +197,7 @@ function SRP(username, password, ser, base_url)
         // u = H(A,B)
         u = new BigInteger(SHA256(Astr + Bstr), 16); 
         // x = H(s, H(I:p))
-        x = new BigInteger(SHA256(s + SHA256(I + ":" + p)), 16);
+        x = new BigInteger(SHA256(s + SHA256(I + ":" + pass)), 16);
         //S = (B - kg^x) ^ (a + ux)
         var kgx = k.multiply(g.modPow(x, N));  
         var aux = a.add(u.multiply(x)); 
@@ -146,16 +206,14 @@ function SRP(username, password, ser, base_url)
         var Mstr = A.toString(16) + B.toString(16) + S.toString(16); 
         M = SHA256(Mstr);
         M2 = SHA256(A.toString(16) + M + S.toString(16)); 
-        send_hash(M);
         //M2 = H(A, M, K)
     };
 
     // Send M to the server
-    function send_hash(M)
+    function send_hash(M, confirm_fun, auth_url)
     {
         var params = "M="+M;
-        var auth_url = url+paths("authenticate/");
-        that.ajaxRequest(auth_url, params, confirm_authentication);
+        that.ajaxRequest(auth_url, params, confirm_fun);
     };
     // Receive M2 from the server and verify it
     function confirm_authentication()
@@ -183,13 +241,12 @@ function SRP(username, password, ser, base_url)
         scriptElt.type = 'text/javascript';
         scriptElt.src = fname;
         document.getElementsByTagName('head')[0].appendChild(scriptElt);
-        
     };
     // If we need SHA1 or MD5, we need to load the javascript files
     function import_hashes()
     {
         // First check that the functions aren't already loaded
-        if(that.isdefined("SHA1") && that.isdefined("MD5")) return;
+        if(isdefined("SHA1") && isdefined("MD5")) return;
         // Get the directory that this javascript file was loaded from
         var arr=that.srpPath.split("/");
         var path = arr.slice(0, arr.length-1).join("/");
