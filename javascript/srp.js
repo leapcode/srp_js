@@ -8,55 +8,63 @@ function SRP(username, password, ser, base_url)
     var rng = new SecureRandom();
     var a = new BigInteger(32, rng);
     var A = g.modPow(a, N);
+    while(A.mod(N) == 0)
+    {
+        a = new BigInteger(32, rng);
+        A = g.modPow(a, N);
+    }
     var Astr = A.toString(16);
-    var B = null;
-    var Bstr = null;
-    var u = null;
-    var x = null;
     var S = null;
     var K = null;
     var M = null;
     var M2 = null;
-    var salt = null;
     var url = base_url;
     var server = ser;
     var that = this;
     var authenticated = false;
-    var hash_import = false;
     var I = username;
     var p = password;
     var xhr = null;
 
+    // *** Accessor methods ***
+
+    // Returns the user's identity
     this.getI = function()
     {
         return I;
     };
+
+    // Returns the XMLHttpRequest object
     this.getxhr = function()
     {
         return xhr;
     };
+
+    // Returns the base URL
     this.geturl = function()
     {
         return url;
     };
+    // Returns the BigInteger, g
     this.getg = function()
     {
         return g;
     };
+
+    // Returns the BigInteger, N
     this.getN = function()
     {
         return N;
     };
+
+    // Calculates the X value and return it as a BigInteger
     this.calcX = function(s)
     {
-        return that.calcXp(s, p);
-    };
-    this.calcXp = function(s, ph)
-    {
-        return new BigInteger(SHA256(s + SHA256(I + ":" + ph)), 16);
+        return new BigInteger(SHA256(s + SHA256(I + ":" + p)), 16);
     };
 
-    function paths(str)
+    // Translates the django path to PHP and ASP.NET paths
+    this.paths = function(str)
     {
         // For now, str will be the django path
         // This function will translate for other backends.
@@ -65,7 +73,21 @@ function SRP(username, password, ser, base_url)
             return str;
         }
     };
-    this.paths = paths;
+
+    // Get the text content of an XML node
+    this.innerxml = function(node)
+    {
+        return node.firstChild.nodeValue;
+    };
+
+    // Check whether or not a variable is defined
+    function isdefined ( variable)
+    {
+        return (typeof(window[variable]) != "undefined");
+    };    
+
+    // *** Actions ***
+
     // Perform ajax requests at the specified url, with the specified parameters
     // Calling back the specified function.
     this.ajaxRequest = function(full_url, params, callback)
@@ -96,21 +118,10 @@ function SRP(username, password, ser, base_url)
         }        
     };
 
-    // Get the text content of an XML node
-    this.innerxml = function(node)
-    {
-        return node.firstChild.nodeValue;
-    };
-
-    // Check whether or not a variable is defined
-    function isdefined ( variable)
-    {
-        return (typeof(window[variable]) != "undefined");
-    };    
     // Start the login process by identifying the user
     this.identify = function()
     {
-        var handshake_url = url + paths("handshake/");
+        var handshake_url = url + that.paths("handshake/");
         var params = "I="+I+"&A="+Astr;
         that.ajaxRequest(handshake_url, params, receive_salts);
     };
@@ -122,82 +133,31 @@ function SRP(username, password, ser, base_url)
 		    if(xhr.responseXML.getElementsByTagName("r").length > 0)
 		    {
 		        var response = xhr.responseXML.getElementsByTagName("r")[0];
+                // If there is no algorithm specified, calculate M given s, B, and P
                 if(!response.getAttribute("a"))
                 {
 		            calculations(response.getAttribute("s"), response.getAttribute("B"), p);
-                    send_hash(M, confirm_authentication, url+paths("authenticate/"));
+                    that.ajaxRequest(url+that.paths("authenticate/"), "M="+M, confirm_authentication);
                 }
+                // If there is an algorithm specified, start the login process
                 else
-                {
                     upgrade(response.getAttribute("s"), response.getAttribute("B"), response.getAttribute("a"), response.getAttribute("d"));
-                }
 		    }
 		    else if(xhr.responseXML.getElementsByTagName("error").length > 0)
-		    {
-		        // This probably means A % N == 0, which means we need to generate
-	            // a new A and reidentify.
-                that.identify();
-		    }
+                that.error_message(xhr.responseXML.getElementsByTagName("error")[0]);
 	    }
     };
-    function upgrade(s,ephemeral,algo,dsalt)
-    {
-        import_hashes();
-        function do_upgrade()
-        {
-            // If sha1 and md5 are still undefined, sleep again
-            if(!isdefined("SHA1") || !isdefined("MD5"))
-            {
-                window.setTimeout(do_upgrade, 10);
-                return;
-            }
-            if(algo == "sha1")
-                hashfun = SHA1;
-            else if(algo == "md5")
-                hashfun = MD5;
-            calculations(s, ephemeral, hashfun(dsalt+p));
-            salt = s;
-            send_hash(M, confirm_upgrade, url+paths("upgrade/authenticate/"));
-        };
-        window.setTimeout(do_upgrade,10);
-    };
-    function confirm_upgrade()
-    {
-        if(xhr.readyState == 4 && xhr.status == 200) {
-            if(xhr.responseXML.getElementsByTagName("M").length > 0)
-		    {
-		        if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
-		        {
-                    var params = "p="+p;
-                    var auth_url = that.geturl() + that.paths("upgrade/verifier/");
-                    that.ajaxRequest(auth_url, params, confirm_verifier);
-	            }
-		        else
-		            that.error_message("Server key does not match");
-		    }
-		    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
-		    {
-		        that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
-		    }
-        }
-    };
-    function confirm_verifier()
-    {
-        if(xhr.readyState == 4 && xhr.status == 200) {
-            if(xhr.responseXML.getElementsByTagName("ok").length > 0)
-                that.identify();
-        }
-    };
     // Calculate S, M, and M2
+    // This is the client side of the SRP specification
     function calculations(s, ephemeral, pass)
     {    
         //S -> C: s | B
-        B = new BigInteger(ephemeral, 16); 
-        Bstr = ephemeral;
+        var B = new BigInteger(ephemeral, 16); 
+        var Bstr = ephemeral;
         // u = H(A,B)
-        u = new BigInteger(SHA256(Astr + Bstr), 16); 
+        var u = new BigInteger(SHA256(Astr + Bstr), 16); 
         // x = H(s, H(I:p))
-        x = new BigInteger(SHA256(s + SHA256(I + ":" + pass)), 16);
+        var x = new BigInteger(SHA256(s + SHA256(I + ":" + pass)), 16);
         //S = (B - kg^x) ^ (a + ux)
         var kgx = k.multiply(g.modPow(x, N));  
         var aux = a.add(u.multiply(x)); 
@@ -209,12 +169,6 @@ function SRP(username, password, ser, base_url)
         //M2 = H(A, M, K)
     };
 
-    // Send M to the server
-    function send_hash(M, confirm_fun, auth_url)
-    {
-        var params = "M="+M;
-        that.ajaxRequest(auth_url, params, confirm_fun);
-    };
     // Receive M2 from the server and verify it
     function confirm_authentication()
     {
@@ -230,11 +184,72 @@ function SRP(username, password, ser, base_url)
 		            that.error_message("Server key does not match");
 		    }
 		    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
+		        that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
+        }
+    };
+
+    // *** Upgrades ***
+
+    // Start the process to upgrade the user's account
+    function upgrade(s,ephemeral,algo,dsalt)
+    {
+        // First we need to import the hash functions
+        import_hashes();
+
+        // Once the hash functions are imported, do the calculations using the hashpass as the password
+        function do_upgrade()
+        {
+            // If sha1 and md5 are still undefined, sleep again
+            if(!isdefined("SHA1") || !isdefined("MD5"))
+            {
+                window.setTimeout(do_upgrade, 10);
+                return;
+            }
+            if(algo == "sha1")
+                hashfun = SHA1;
+            else if(algo == "md5")
+                hashfun = MD5;
+            alert(hashfun(dsalt+p));
+            calculations(s, ephemeral, hashfun(dsalt+p));
+            that.ajaxRequest(url+that.paths("upgrade/authenticate/"), "M="+M, confirm_upgrade);
+        };
+        window.setTimeout(do_upgrade,10);
+    };
+
+    // Receive the server's M, confirming that the server has HASH(p)
+    // Next, send P in plaintext (this is the **only** time it should ever be sent plain text)
+    function confirm_upgrade()
+    {
+        if(xhr.readyState == 4 && xhr.status == 200) {
+            if(xhr.responseXML.getElementsByTagName("M").length > 0)
+		    {
+		        if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
+		        {
+                    var auth_url = url + that.paths("upgrade/verifier/");
+                    that.ajaxRequest(auth_url, "p="+p, confirm_verifier);
+	            }
+		        else
+		            that.error_message("Server key does not match");
+		    }
+		    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
 		    {
 		        that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
 		    }
         }
     };
+
+    // After sending the password, check that the response is OK, then reidentify
+    function confirm_verifier()
+    {
+        if(xhr.readyState == 4 && xhr.status == 200) {
+            if(xhr.responseXML.getElementsByTagName("ok").length > 0)
+                that.identify();
+            else
+                that.error_message("Verifier could not be confirmed");
+        }
+    };
+
+    // This loads javascript libraries. Fname is the path to the library to be imported
     function import_file(fname)
     {
         var scriptElt = document.createElement('script');
