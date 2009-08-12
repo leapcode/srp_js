@@ -1,4 +1,4 @@
-function SRP(username, password, ser, base_url)
+function SRP()
 {
     // Variables that will be used in the SRP protocol
     var Nstr = "115b8b692e0e045692cf280b436735c77a5a9e8a9e7ed56c965f87db5b2a2ece3";
@@ -18,12 +18,12 @@ function SRP(username, password, ser, base_url)
     var K = null;
     var M = null;
     var M2 = null;
-    var url = base_url;
-    var server = ser;
+    var url = document.getElementById("srp_url").value;
+    var server = document.getElementById("srp_server").value;
     var that = this;
     var authenticated = false;
-    var I = username;
-    var p = password;
+    var I = document.getElementById("srp_username").value;
+    var p = document.getElementById("srp_password").value;
     var xhr = null;
 
     // *** Accessor methods ***
@@ -177,8 +177,8 @@ function SRP(username, password, ser, base_url)
 		    {
 		        if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
 		        {
-		            that.success();
-	                authenticated = true;
+                    authenticated = true;
+		            success();
 	            }
 		        else
 		            that.error_message("Server key does not match");
@@ -294,6 +294,22 @@ function SRP(username, password, ser, base_url)
             import_file(path+"/aes.js");
         }        
     }
+
+    function success()
+    {
+        var forward_url = document.getElementById("srp_forward").value;
+        if(forward_url.charAt(0) != "#")
+            window.location = forward_url;
+        else
+        {
+            window.location = forward_url;
+            that.success();
+        }
+    };
+    this.success = function()
+    {
+        alert("Login successful.");
+    };
     // If someone wants to use the session key for encrypting traffic, they can
     // access the key with this function.
     this.key = function()
@@ -313,10 +329,10 @@ function SRP(username, password, ser, base_url)
     // This function is called when authentication is successful.
     // Developers can set this to other functions in specific implementations
     // and change the functionality.
-    this.success = function()
+    /*this.success = function()
     {
         alert("Authentication successful.");
-    };
+    };*/
     // If an error occurs, raise it as an alert.
     // Developers can set this to an alternative function to handle erros differently.
     this.error_message = function(t)

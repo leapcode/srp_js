@@ -19,10 +19,7 @@
             alert("Password cannot be blank");
         else
         {
-            var username = document.getElementById("srp_username").value;
-            var password = document.getElementById("srp_password").value;
-            var url = window.location.protocol+"//"+window.location.host+"/srp/";
-            srp = new SRP(username, password, "django", url);
+            srp = new SRP();
             srp.success = function()
             {
                 alert("We win");
@@ -39,6 +36,9 @@
     <tr><td>Username:</td><td><input type="text" id="srp_username" /></td></tr>
     <tr><td>Password:</td><td><input type="password" id="srp_password" /></td></tr>
     <tr><td>Confirm:</td><td><input type="password" id="confirm_password" /></td></tr>
+    <input type="hidden" id="srp_url" value="{{ srp_url }}"/>
+    <input type="hidden" id="srp_forward" value="{{ srp_url }}login/"/>
+    <input type="hidden" id="srp_server" value="django"/>
     </table>
     <input type="submit"/>
     </form>

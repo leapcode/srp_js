@@ -15,14 +15,19 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     # (r'^admin/(.*)', admin.site.root),
+
+    # Login and regiser pages. These are mainly for testing.
+    (r'^srp/register/$', views.register_page),
+    (r'^srp/login/$', views.login_page),
+
     (r'^srp/register/salt/$', views.register_salt),
     (r'^srp/register/user/$', views.register_user),
+
+    # 
     (r'^srp/handshake/$', views.handshake),
     (r'^srp/authenticate/$', views.verify),
-    (r'^srp/login/$', views.login_page),
-    (r'^srp/register/$', views.register_page),
+
+    # Only include these if you are upgrading an existing installation to SRP
     (r'^srp/upgrade/authenticate/$', views.upgrade_auth),
     (r'^srp/upgrade/verifier/$', views.upgrade_add_verifier),
-    (r'^srp/aes/$', views.test_aes),
-    (r'^srp/aes/post/$', views.doaes),
 )
