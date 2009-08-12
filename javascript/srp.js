@@ -209,11 +209,26 @@ function SRP(username, password, ser, base_url)
                 hashfun = SHA1;
             else if(algo == "md5")
                 hashfun = MD5;
-            alert(hashfun(dsalt+p));
+            //alert(hashfun(dsalt+p));
             calculations(s, ephemeral, hashfun(dsalt+p));
             that.ajaxRequest(url+that.paths("upgrade/authenticate/"), "M="+M, confirm_upgrade);
         };
         window.setTimeout(do_upgrade,10);
+    };
+
+    // Encrypt plaintext using slowAES
+    function encrypt(plaintext)
+    {
+        var key = cryptoHelpers.toNumbers(that.key());
+        var byteMessage = cryptoHelpers.convertStringToByteArray(plaintext);
+        var iv = new Array(16);
+        rng.nextBytes(iv);
+        var paddedByteMessage = slowAES.getPaddedBlock(byteMessage, 0, byteMessage.length, slowAES.modeOfOperation.CFB);
+        var ciphertext = slowAES.encrypt(paddedByteMessage, slowAES.modeOfOperation.CFB, key, key.length, iv).cipher;
+        var retstring = cryptoHelpers.base64.encode(iv.concat(ciphertext));
+        while(retstring.indexOf("+",0) > -1)
+            retstring = retstring.replace("+", "_");
+        return retstring;
     };
 
     // Receive the server's M, confirming that the server has HASH(p)
@@ -225,8 +240,9 @@ function SRP(username, password, ser, base_url)
 		    {
 		        if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
 		        {
+                    K = SHA256(S.toString(16));
                     var auth_url = url + that.paths("upgrade/verifier/");
-                    that.ajaxRequest(auth_url, "p="+p, confirm_verifier);
+                    that.ajaxRequest(auth_url, "p="+encrypt(p)+"&l="+p.length, confirm_verifier);
 	            }
 		        else
 		            that.error_message("Server key does not match");
@@ -242,6 +258,7 @@ function SRP(username, password, ser, base_url)
     function confirm_verifier()
     {
         if(xhr.readyState == 4 && xhr.status == 200) {
+            K = null;
             if(xhr.responseXML.getElementsByTagName("ok").length > 0)
                 that.identify();
             else
@@ -273,6 +290,8 @@ function SRP(username, password, ser, base_url)
         {
             import_file(path+"/MD5.js");
             import_file(path+"/SHA1.js");
+            import_file(path+"/cryptoHelpers.js");
+            import_file(path+"/aes.js");
         }        
     }
     // If someone wants to use the session key for encrypting traffic, they can
@@ -282,7 +301,7 @@ function SRP(username, password, ser, base_url)
         if(K == null)
             if(authenticated)
             {
-                K = SHA256(S);
+                K = SHA256(S.toString(16));
                 return K;
             }
             else

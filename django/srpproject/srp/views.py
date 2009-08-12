@@ -25,6 +25,10 @@ def generate_fake_salt(I):
     salt_chars = "./" + string.ascii_letters + string.digits    
     salt = "".join([random.choice(salt_chars) for i in range(0,16)])
     return salt, int(hashlib.sha256("%s:%s" % (salt, settings.SECRET_KEY)).hexdigest(), 16)
+
+def test_aes(request):
+    from django.shortcuts import render_to_response
+    return render_to_response('aes.html',{'static_files': "http://%s/srp-test/javascript" % request.get_host()})
     
 def login_page(request):
     from django.shortcuts import render_to_response
@@ -150,7 +154,8 @@ def upgrade_add_verifier(request):
     from django.contrib.auth.models import User
     import hashlib
     salt = generate_salt()
-    x = int(hashlib.sha256(salt + hashlib.sha256("%s:%s" % (request.session["srp_I"], request.POST["p"])).hexdigest()).hexdigest(), 16)
+    key = hashlib.sha256(request.session["srp_S"]).hexdigest()
+    x = int(hashlib.sha256(salt + hashlib.sha256("%s:%s" % (request.session["srp_I"], decrypt(request.POST["p"], key, int(request.POST["l"])))).hexdigest()).hexdigest(), 16)
     user = User.objects.get(username=request.session["srp_I"])
     srpuser = SRPUser()
     srpuser.__dict__.update(user.__dict__)
@@ -159,3 +164,32 @@ def upgrade_add_verifier(request):
     srpuser.password = ""
     srpuser.save()
     return HttpResponse("<ok/>", mimetype="text/xml")
+
+def decrypt(c, key, plen):
+    from srp import aes
+    import base64
+    moo = aes.AESModeOfOperation()
+    cypherkey = map(ord, key.decode("hex"))
+    try:
+        ciphertext = base64.b64decode(c.replace("_", "+"))
+    except TypeError:
+        return HttpResponse("<error>%s</error>" % request.POST["c"], mimetype="text/xml" )
+    iv = map(ord, ciphertext[:16])
+    ciphertext= map(ord, ciphertext[16:])
+    return moo.decrypt(ciphertext, 0, moo.modeOfOperation["CFB"], cypherkey, len(cypherkey), iv)[:plen]
+
+
+def doaes(request):
+    from srp import aes
+    import base64
+    moo = aes.AESModeOfOperation()
+    cypherkey = map(ord, "6754c921b8dcbd1f8b58748cd87ac60ce857314687a65df05c470a46f438842c".decode("hex"))
+    try:
+        ciphertext = base64.b64decode(request.POST["c"].replace("_", "+"))
+    except TypeError:
+        return HttpResponse("<error>%s</error>" % request.POST["c"], mimetype="text/xml" )
+    iv = map(ord, ciphertext[:16])
+    ciphertext= map(ord, ciphertext[16:])
+    # (self, cipherIn, originalsize, mode, key, size, IV):
+    plaintext = moo.decrypt(ciphertext, int(request.POST["l"]), moo.modeOfOperation["OFB"], cypherkey, len(cypherkey), iv)[:int(request.POST["l"])]
+    return HttpResponse("<P>%s</P>" % plaintext, mimetype="text/xml" )

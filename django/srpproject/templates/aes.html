@@ -1,0 +1,69 @@
+<html>
+    <head>
+        <script src="{{ static_files }}/prng4.js"></script>
+        <script src="{{ static_files }}/rng.js"></script>
+        <script src="{{ static_files }}/jsPacker/hash.min.js"></script>
+        <script type="text/javascript">
+            var key = cryptoHelpers.toNumbers("6754c921b8dcbd1f8b58748cd87ac60ce857314687a65df05c470a46f438842c");
+            var rng = new SecureRandom();
+            innerxml = function(node)
+            {
+                return node.firstChild.nodeValue;
+            };
+            ajaxRequest = function(full_url, params, callback)
+            {
+                if( window.XMLHttpRequest)
+                    xhr = new XMLHttpRequest();
+                else if (window.ActiveXObject){
+                    try{
+                        xhr = new ActiveXObject("Microsoft.XMLHTTP");
+                    }catch (e){}
+                }
+                else
+                {
+                    that.error_message("Ajax not supported.");
+                    return;
+                }
+                if(xhr){
+                    xhr.onreadystatechange = callback;
+                    xhr.open("POST", full_url, true);
+                    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xhr.setRequestHeader("Content-length", params.length);
+                    xhr.setRequestHeader("Connection", "close");
+                    xhr.send(params);
+                }
+                else
+                {
+                    that.error_message("Ajax failed.");
+                }        
+            };
+            function encryptDecrypt()
+            {
+                var byteMessage = cryptoHelpers.convertStringToByteArray(document.getElementById("plaintext").value);
+                var iv = new Array(16);
+                rng.nextBytes(iv);
+                var paddedByteMessage = slowAES.getPaddedBlock(byteMessage, 0, byteMessage.length, slowAES.modeOfOperation.OFB);
+                var ciphertext = slowAES.encrypt(paddedByteMessage, slowAES.modeOfOperation.OFB, key, key.length, iv).cipher;
+                var sendstring = cryptoHelpers.base64.encode(iv.concat(ciphertext));
+                while(sendstring.indexOf("+",0) > -1)
+                    sendstring = sendstring.replace("+", "_");
+                ajaxRequest("http://home.ausiv.com:85/srp/aes/post/", "c="+sendstring+"&l="+byteMessage.length, displayText);
+
+            };
+            function displayText()
+            {
+                if(xhr.readyState == 4 && xhr.status == 200) {
+                    if(xhr.responseXML.getElementsByTagName("P").length > 0)
+                        document.getElementById("output").value = innerxml(xhr.responseXML.getElementsByTagName("P")[0]);
+                    else if(xhr.responseXML.getElementsByTagName("error").length > 0)
+                        alert(innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
+                }
+            };
+        </script>
+    </head>
+    <body>
+        <input type="text" id="plaintext"/>
+        <input type="button" value="Send Encrypted Text" onclick="javascript:encryptDecrypt();"/>
+        <input type="text" id="output"/>
+    </body>
+</html>
