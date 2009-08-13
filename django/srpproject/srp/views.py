@@ -1,6 +1,6 @@
 # Create your views here.
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 
 from django.contrib.auth.models import User
 
@@ -15,20 +15,6 @@ def generate_salt():
     salt_chars = "./" + string.ascii_letters + string.digits
     return "".join([randomgen.choice(salt_chars) for i in range(0,16)])
 
-# In upgrades, we'll need to decrypt some AES data
-def decrypt(c, key, plen):
-    from srp import aes
-    import base64
-    moo = aes.AESModeOfOperation()
-    cypherkey = map(ord, key.decode("hex"))
-    try:
-        ciphertext = base64.b64decode(c.replace("_", "+"))
-    except TypeError:
-        return HttpResponse("<error>%s</error>" % request.POST["c"], mimetype="text/xml" )
-    iv = map(ord, ciphertext[:16])
-    ciphertext= map(ord, ciphertext[16:])
-    return moo.decrypt(ciphertext, 0, moo.modeOfOperation["CFB"], cypherkey, len(cypherkey), iv)[:plen]
-
 # We want to avoid information leakage. For users that don't exist, we need salts to be consistent.
 # These "fake" salts are seeded with the username and the django secret_key. They're not as random
 # as true salts should be, but they should be indistinguishable to a hacker who isn't sure whether
@@ -40,17 +26,34 @@ def generate_fake_salt(I):
     salt = "".join([random.choice(salt_chars) for i in range(0,16)])
     return salt, int(hashlib.sha256("%s:%s" % (salt, settings.SECRET_KEY)).hexdigest(), 16)
 
-def test_aes(request):
-    from django.shortcuts import render_to_response
-    return render_to_response('aes.html',{'static_files': "http://%s/srp-test/javascript" % request.get_host()})
+# In upgrades, we'll need to decrypt some AES data
+def decrypt(c, key, plen):
+    from srp import aes
+    import base64
+    moo = aes.AESModeOfOperation()
+    cypherkey = map(ord, key.decode("hex"))
+    ciphertext = base64.b64decode(c.replace("_", "+"))
+    iv = map(ord, ciphertext[:16])
+    ciphertext= map(ord, ciphertext[16:])
+    return moo.decrypt(ciphertext, 0, moo.modeOfOperation["CFB"], cypherkey, len(cypherkey), iv)[:plen]
+
+def generate_verifier(salt, username, password):
+    import hashlib
+    x = int(hashlib.sha256(salt + hashlib.sha256("%s:%s" % (username, password)).hexdigest()).hexdigest(), 16)
+    return hex(pow(2, x, 125617018995153554710546479714086468244499594888726646874671447258204721048803))[2:-1]
     
 def login_page(request):
     from django.shortcuts import render_to_response
-    return render_to_response('login.html',{'static_files': "http://%s/srp-test/javascript" % request.get_host(), 'srp_url': "http://%s/srp/" % request.get_host()})
+    return render_to_response('login.html', \
+        {'error': "Invalid username or password" if request.GET["error"] == '1' and not request.user.is_authenticated() else "",\
+        'static_files': "http://%s/srp-test/javascript" % request.get_host(), \
+        'srp_url': "http://%s/srp/" % request.get_host()})
 
 def register_page(request):
     from django.shortcuts import render_to_response
-    return render_to_response('register.html',{'static_files': "http://%s/srp-test/javascript" % request.get_host(), 'srp_url': "http://%s/srp/" % request.get_host()})
+    return render_to_response('register.html',\
+        {'static_files': "http://%s/srp-test/javascript" % request.get_host(),\
+         'srp_url': "http://%s/srp/" % request.get_host()})
 
 ###
 ### User Registration
@@ -109,12 +112,11 @@ def handshake(request):
                 salt = generate_salt()
                 algo, dsalt, hashpass = user.password.split("$")
                 upgrade = True
-                x = int(hashlib.sha256(salt + hashlib.sha256(user.username + ":" + hashpass).hexdigest()).hexdigest(), 16)
-                v = pow(2, x, N)
+                v = generate_verifier(salt, user.username, hashpass)
 
         # We don't want to leak that the username doesn't exist. Make up a fake salt and verifier.
         except User.DoesNotExist:
-            salt, x = generate_fake_salt(request.POST["I"])
+            salt, x = generate_fake_salt(request.POST["I"])            
             v = pow(g, x, N)
 
         # Ensure that B%N != 0
@@ -154,6 +156,7 @@ def verify(request):
         pass
     return HttpResponse(response, mimetype="text/xml")
 
+# Check that the user has generated the correct M
 def upgrade_auth(request):
     import hashlib
     if request.POST["M"] == request.session["srp_M"]:
@@ -163,18 +166,56 @@ def upgrade_auth(request):
         response = "<error>Invalid username or password.</error>"
     return HttpResponse(response, mimetype="text/xml")
 
+# Receive the encrypted password, create the verifier, save the user, and notify the client
 def upgrade_add_verifier(request):
     from srp.models import SRPUser
     from django.contrib.auth.models import User
     import hashlib
     salt = generate_salt()
     key = hashlib.sha256(request.session["srp_S"]).hexdigest()
-    x = int(hashlib.sha256(salt + hashlib.sha256("%s:%s" % (request.session["srp_I"], decrypt(request.POST["p"], key, int(request.POST["l"])))).hexdigest()).hexdigest(), 16)
     user = User.objects.get(username=request.session["srp_I"])
     srpuser = SRPUser()
     srpuser.__dict__.update(user.__dict__)
-    srpuser.verifier = hex(pow(2, x, 125617018995153554710546479714086468244499594888726646874671447258204721048803))[2:-1]
+    srpuser.verifier = generate_verifier(salt, request.session["srp_I"], decrypt(request.POST["p"], key, int(request.POST["l"])))
     srpuser.salt = salt
     srpuser.password = ""
     srpuser.save()
     return HttpResponse("<ok/>", mimetype="text/xml")
+
+# If a user has posted their username and password, we'll go ahead and authenticate them
+def no_javascript(request):
+    from django.contrib.auth.models import User
+    from srp.models import SRPUser
+    from django.contrib.auth import login, authenticate
+    try:
+        user = User.objects.get(username=request.POST["srp_username"])
+        try:
+            v = generate_verifier(user.srpuser.salt, request.POST["srp_username"], request.POST["srp_password"])
+            user = authenticate(username=request.POST["srp_username"], M=(user.srpuser.verifier, v))
+            if user:
+                login(request, user)
+                if not request.POST["srp_forward"].startswith("#"):
+                    return HttpResponseRedirect(request.POST["srp_forward"])
+                else:
+                    return HttpResponseRedirect("%s%s" % (request.META["HTTP_REFERER"], request.POST["srp_forward"]))
+        except SRPUser.DoesNotExist:
+            if user.check_password(request.POST["srp_password"]):
+                srpuser = SRPUser()
+                srpuser.__dict__.update(user.__dict__)
+                srpuser.salt = generate_salt()
+                srpuser.verifier = generate_verifier(srpuser.salt, request.POST["srp_username"], request.POST["srp_password"])
+                srpuser.password = ""
+                srpuser.save()
+                if not request.POST["srp_forward"].startswith("#"):
+                    return HttpResponseRedirect(request.POST["srp_forward"])
+                else:
+                    return HttpResponseRedirect("%s%s" % (request.META["HTTP_REFERER"], request.POST["srp_forward"]))
+    except User.DoesNotExist:
+        pass
+    if "?" in request.META["HTTP_REFERER"]:
+        if "error=1" in request.META["HTTP_REFERER"]:
+            return HttpResponseRedirect("%s" % request.META["HTTP_REFERER"])
+        else:
+            return HttpResponseRedirect("%s&error=1" % request.META["HTTP_REFERER"])
+    else:
+        return HttpResponseRedirect("%s?error=1" % request.META["HTTP_REFERER"])

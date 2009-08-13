@@ -20,12 +20,13 @@
     </script>
  </head>
  <body>
-    <form action="{{ srp_url }}/noJs/" onsubmit="return login()">
+    <form action="{{ srp_url }}noJs/" method="POST" onsubmit="return login()">
     <table>
-    <tr><td>Username:</td><td><input type="text" id="srp_username" /></td></tr>
-    <tr><td>Password:</td><td><input type="password" id="srp_password" /></td></tr>
+    {{ error }}<p/>
+    <tr><td>Username:</td><td><input type="text" name="srp_username" id="srp_username" /></td></tr>
+    <tr><td>Password:</td><td><input type="password" name="srp_password" id="srp_password" /></td></tr>
     <input type="hidden" id="srp_url" value="{{ srp_url }}"/>
-    <input type="hidden" id="srp_forward" value="#"/>
+    <input type="hidden" name="srp_forward" id="srp_forward" value="#"/>
     <input type="hidden" id="srp_server" value="django"/>
     </table>
     <input type="submit"/>
