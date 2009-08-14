@@ -284,7 +284,7 @@ function SRP()
         var path = arr.slice(0, arr.length-1).join("/");
         // If this file is called srp.min.js, we will load the packed hash file
         if(arr[arr.length-1] == "srp.min.js")
-            import_file(path+"/hash.min.js");
+            import_file(path+"/crypto.min.js");
         // Otherwise, this file is presumably srp.js, and we will load individual hash files
         else
         {

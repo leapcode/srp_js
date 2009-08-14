@@ -45,7 +45,7 @@ def generate_verifier(salt, username, password):
 def login_page(request):
     from django.shortcuts import render_to_response
     return render_to_response('login.html', \
-        {'error': "Invalid username or password" if request.GET["error"] == '1' and not request.user.is_authenticated() else "",\
+        {'error': "Invalid username or password" if "error" in request.GET and request.GET["error"] == '1' and not request.user.is_authenticated() else "",\
         'static_files': "http://%s/srp-test/javascript" % request.get_host(), \
         'srp_url': "http://%s/srp/" % request.get_host()})
 
