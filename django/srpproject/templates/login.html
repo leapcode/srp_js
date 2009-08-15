@@ -1,35 +1,10 @@
 <html>
  <head>
-
-{% comment %}    <script src="{{ static_files }}/SHA256.js"></script>
-    <script src="{{ static_files }}/prng4.js"></script>
-    <script src="{{ static_files }}/rng.js"></script>
-    <script src="{{ static_files }}/jsbn.js"></script>
-    <script src="{{ static_files }}/jsbn2.js"></script>
-    <script src="{{ static_files }}/srp.js"></script>
-{% endcomment %}
-    <script src="{{ static_files }}/jsPacker/srp.min.js"></script>
-
-    <script type="text/javascript">
-    function login()
-    {
-        srp = new SRP();
-        srp.identify();
-        return false;
-    }
-    </script>
+    {{ jsHeader|safe }}
+    {{ loginFunction|safe }}
  </head>
  <body>
-    <form action="{{ srp_url }}noJs/" method="POST" onsubmit="return login()">
-    <table>
     {{ error }}<p/>
-    <tr><td>Username:</td><td><input type="text" name="srp_username" id="srp_username" /></td></tr>
-    <tr><td>Password:</td><td><input type="password" name="srp_password" id="srp_password" /></td></tr>
-    <input type="hidden" id="srp_url" value="{{ srp_url }}"/>
-    <input type="hidden" name="srp_forward" id="srp_forward" value="#"/>
-    <input type="hidden" id="srp_server" value="django"/>
-    </table>
-    <input type="submit"/>
-    </form>
+    {{ loginForm|safe }}
  </body>
 </html>

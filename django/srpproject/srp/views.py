@@ -1,5 +1,3 @@
-# Create your views here.
-
 from django.http import HttpResponse, HttpResponseRedirect
 
 from django.contrib.auth.models import User
@@ -44,16 +42,21 @@ def generate_verifier(salt, username, password):
     
 def login_page(request):
     from django.shortcuts import render_to_response
+    import util
     return render_to_response('login.html', \
         {'error': "Invalid username or password" if "error" in request.GET and request.GET["error"] == '1' and not request.user.is_authenticated() else "",\
-        'static_files': "http://%s/srp-test/javascript" % request.get_host(), \
-        'srp_url': "http://%s/srp/" % request.get_host()})
+        'jsHeader': util.loginHeader("http://%s/srp-test/javascript" % request.get_host()),\
+        'loginForm': util.loginForm("http://%s/srp/" % request.get_host(), "http://google.com"),\
+        'loginFunction': util.loginFunction() })
 
 def register_page(request):
     from django.shortcuts import render_to_response
-    return render_to_response('register.html',\
-        {'static_files': "http://%s/srp-test/javascript" % request.get_host(),\
-         'srp_url': "http://%s/srp/" % request.get_host()})
+    import util
+    return render_to_response('login.html', \
+        {'error': "Invalid username or password" if "error" in request.GET and request.GET["error"] == '1' and not request.user.is_authenticated() else "",\
+        'jsHeader': util.registerHeader("http://%s/srp-test/javascript" % request.get_host()),\
+        'loginForm': util.registerForm("http://%s/srp/" % request.get_host(), "http://google.com"),\
+        'loginFunction': util.registerFunction() })
 
 ###
 ### User Registration
@@ -190,6 +193,8 @@ def no_javascript(request):
     try:
         user = User.objects.get(username=request.POST["srp_username"])
         try:
+            # Create a verifier for the user, and check that it matches the user's verifier
+            # Since we're doing it all on one side, we can skip the rest of the protocol
             v = generate_verifier(user.srpuser.salt, request.POST["srp_username"], request.POST["srp_password"])
             user = authenticate(username=request.POST["srp_username"], M=(user.srpuser.verifier, v))
             if user:
@@ -199,6 +204,8 @@ def no_javascript(request):
                 else:
                     return HttpResponseRedirect("%s%s" % (request.META["HTTP_REFERER"], request.POST["srp_forward"]))
         except SRPUser.DoesNotExist:
+            # The user exists in the auth table, but not the SRP table
+            # Create an SRP version of the user
             if user.check_password(request.POST["srp_password"]):
                 srpuser = SRPUser()
                 srpuser.__dict__.update(user.__dict__)
@@ -211,6 +218,8 @@ def no_javascript(request):
                 else:
                     return HttpResponseRedirect("%s%s" % (request.META["HTTP_REFERER"], request.POST["srp_forward"]))
     except User.DoesNotExist:
+        # The user does not exist in the auth tables
+        # Send the client back to the login page with an error
         pass
     if "?" in request.META["HTTP_REFERER"]:
         if "error=1" in request.META["HTTP_REFERER"]:

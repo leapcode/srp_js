@@ -65,10 +65,16 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'srpproject.urls'
 
+AUTHENTICATION_BACKENDS = (
+    'srp.backends.SRPBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    "/home/austin/Projects/SRP-SVN/srp-js/django/srpproject/templates"
 )
 
 INSTALLED_APPS = (
@@ -77,8 +83,4 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'srpproject.srp'
-)
-
-AUTHENTICATION_BACKENDS = (
-    'srp.backends.SRPBackend',
 )
