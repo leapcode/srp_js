@@ -1,5 +1,7 @@
 imported to github from: https://code.google.com/p/srp-js/
 
+License: [New BSD License](http://www.opensource.org/licenses/bsd-license.php)
+
 Many websites today require some form of authentication to access the site's full functionality. Unfortunately, many of these websites do not use secure authentication protocols.
 
 In some cases, websites will store user passwords in their database. If the database ever becomes compromised, an attacker could authenticate as any user he wanted.
