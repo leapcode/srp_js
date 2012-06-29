@@ -109,7 +109,6 @@ function SRP()
             xhr.open("POST", full_url, true);
             xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhr.setRequestHeader("Content-length", params.length);
-            xhr.setRequestHeader("Connection", "close");
             xhr.send(params);
         }
         else
