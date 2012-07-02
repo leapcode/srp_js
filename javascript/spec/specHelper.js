@@ -12,11 +12,20 @@ var specHelper = (function() {
     header = { "Content-Type": "application/json;charset=utf-8" };
     body = JSON.stringify(object);
     request.respond(200, header, body);
-  } 
+  }
+
+  function setupFakeXHR() {
+    this.xhr = sinon.useFakeXMLHttpRequest();
+    var requests = this.requests = [];
+    this.xhr.onCreate = function (xhr) {
+      requests.push(xhr);
+    };
+  }
 
   return {
     respondJSON: respondJSON,
-    respondXML: respondXML
+    respondXML: respondXML,
+    setupFakeXHR: setupFakeXHR
   }
 
 })();
