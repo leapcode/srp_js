@@ -7,10 +7,15 @@ var specHelper = (function() {
     body += content;
     request.respond(200, header, body);
   }
-  
-  var originalBigInteger = BigInteger;
-  
+
+  function respondJSON(request, object) {
+    header = { "Content-Type": "application/json;charset=utf-8" };
+    body = JSON.stringify(object);
+    request.respond(200, header, body);
+  } 
+
   return {
+    respondJSON: respondJSON,
     respondXML: respondXML
   }
 

@@ -52,6 +52,21 @@ describe("Signup", function() {
     expect(callback).toHaveBeenCalled();
   });
 
+  it("identifies after successful registration with JSON (INTEGRATION)", function(){
+    var callback = sinon.spy();
+    this.srp.identify = callback;
+    this.srp.register();
+    expect(this.requests.length).toBe(1);
+    expect(this.requests[0].url).toBe("register/salt/");
+    expect(this.requests[0].requestBody).toBe("I=user");
+    specHelper.respondJSON(this.requests[0], {salt: "5d3055e0acd3ddcfc15"});
+    expect(this.requests.length).toBe(2);
+    expect(this.requests[1].url).toBe("register/user/");
+    expect(this.requests[1].requestBody).toBe("v=adcd57b4a4a05c2e205b0b7b30014d9ff635d8d8db2f502f08e9b9c132800c44");
+    specHelper.respondJSON(this.requests[1], {ok: true});
+    expect(callback).toHaveBeenCalled();
+  });
+
 
 });
 

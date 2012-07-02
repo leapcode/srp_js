@@ -140,7 +140,7 @@ function SRP()
 
   function responseIsJSON() {
     return (xhr.responseType == 'json') || 
-           (xhr.responseHeaders["Content-Type"].indexOf('application/json') > 0)
+           (xhr.responseHeaders["Content-Type"].indexOf('application/json') >= 0)
   }
 
   function parseXML(xml) {
