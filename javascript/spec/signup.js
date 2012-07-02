@@ -2,11 +2,7 @@ describe("Signup", function() {
 
   beforeEach(function() {
     this.srp = new SRP();
-    this.xhr = sinon.useFakeXMLHttpRequest();
-    var requests = this.requests = [];
-    this.xhr.onCreate = function (xhr) {
-      requests.push(xhr);
-    };
+    specHelper.setupFakeXHR.apply(this);
   });
 
   afterEach(function() {
@@ -21,9 +17,8 @@ describe("Signup", function() {
     var callback = sinon.spy();
     this.srp.register_receive_salt = callback;
     this.srp.register();
-    expect(this.requests.length).toBe(1);
-
-    specHelper.respondXML(this.requests[0], "<salt>5d3055e0acd3ddcfc15</salt>");
+    this.expectRequest('register/salt/', "I=user")
+    this.respondXML("<salt>5d3055e0acd3ddcfc15</salt>");
     expect(callback.called).toBeTruthy();
   });
 
@@ -31,9 +26,8 @@ describe("Signup", function() {
     var callback = sinon.spy();
     this.srp.register_send_verifier = callback;
     this.srp.register();
-    expect(this.requests.length).toBe(1);
-
-    specHelper.respondXML(this.requests[0], "<salt>5d3055e0acd3ddcfc15</salt>");
+    this.expectRequest('register/salt/', "I=user")
+    this.respondXML("<salt>5d3055e0acd3ddcfc15</salt>");
     expect(callback).toHaveBeenCalledWith("adcd57b4a4a05c2e205b0b7b30014d9ff635d8d8db2f502f08e9b9c132800c44");
   });
 
@@ -41,14 +35,10 @@ describe("Signup", function() {
     var callback = sinon.spy();
     this.srp.identify = callback;
     this.srp.register();
-    expect(this.requests.length).toBe(1);
-    expect(this.requests[0].url).toBe("register/salt/");
-    expect(this.requests[0].requestBody).toBe("I=user");
-    specHelper.respondXML(this.requests[0], "<salt>5d3055e0acd3ddcfc15</salt>");
-    expect(this.requests.length).toBe(2);
-    expect(this.requests[1].url).toBe("register/user/");
-    expect(this.requests[1].requestBody).toBe("v=adcd57b4a4a05c2e205b0b7b30014d9ff635d8d8db2f502f08e9b9c132800c44");
-    specHelper.respondXML(this.requests[1], "<ok/>");
+    this.expectRequest('register/salt/', "I=user")
+    this.respondXML("<salt>5d3055e0acd3ddcfc15</salt>");
+    this.expectRequest('register/user/', "v=adcd57b4a4a05c2e205b0b7b30014d9ff635d8d8db2f502f08e9b9c132800c44");
+    this.respondXML("<ok />");
     expect(callback).toHaveBeenCalled();
   });
 
@@ -56,14 +46,10 @@ describe("Signup", function() {
     var callback = sinon.spy();
     this.srp.identify = callback;
     this.srp.register();
-    expect(this.requests.length).toBe(1);
-    expect(this.requests[0].url).toBe("register/salt/");
-    expect(this.requests[0].requestBody).toBe("I=user");
-    specHelper.respondJSON(this.requests[0], {salt: "5d3055e0acd3ddcfc15"});
-    expect(this.requests.length).toBe(2);
-    expect(this.requests[1].url).toBe("register/user/");
-    expect(this.requests[1].requestBody).toBe("v=adcd57b4a4a05c2e205b0b7b30014d9ff635d8d8db2f502f08e9b9c132800c44");
-    specHelper.respondJSON(this.requests[1], {ok: true});
+    this.expectRequest('register/salt/', "I=user")
+    this.respondJSON({salt: "5d3055e0acd3ddcfc15"});
+    this.expectRequest('register/user/', "v=adcd57b4a4a05c2e205b0b7b30014d9ff635d8d8db2f502f08e9b9c132800c44");
+    this.respondJSON({ok: true});
     expect(callback).toHaveBeenCalled();
   });
 

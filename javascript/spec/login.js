@@ -30,15 +30,12 @@ describe("Login", function() {
 
     it("works with XML responses", function(){
       this.srp.identify();
-      expect(this.requests.length).toBe(1);
-      expect(this.requests[0].url).toBe("handshake/");
-      expect(this.requests[0].requestBody).toBe("I=user&A=" + A);
-      specHelper.respondXML(this.requests[0], "<r s='"+salt+"' B='"+B+"' />");
-      expect(this.requests.length).toBe(2);
-      expect(this.requests[1].url).toBe("authenticate/");
-      expect(this.requests[1].requestBody).toBe("M=" + M);
-      specHelper.respondXML(this.requests[1], "<M>"+M2+"</M>");
-
+      
+      this.expectRequest('handshake/', 'I=user&A='+A);
+      this.respondXML("<r s='"+salt+"' B='"+B+"' />");
+      this.expectRequest('authenticate/', 'M='+M);
+      this.respondXML("<M>"+M2+"</M>");
+      
       expect(this.srp.success).toHaveBeenCalled();
       expect(window.location.hash).toBe("#logged_in")
     });
@@ -46,14 +43,10 @@ describe("Login", function() {
     it("works with JSON responses", function(){
       this.srp.identify();
 
-      expect(this.requests.length).toBe(1);
-      expect(this.requests[0].url).toBe("handshake/");
-      expect(this.requests[0].requestBody).toBe("I=user&A=" + A);
-      specHelper.respondJSON(this.requests[0], {s: salt, B: B});
-      expect(this.requests.length).toBe(2);
-      expect(this.requests[1].url).toBe("authenticate/");
-      expect(this.requests[1].requestBody).toBe("M=" + M);
-      specHelper.respondJSON(this.requests[1], {M: M2});
+      this.expectRequest('handshake/', 'I=user&A='+A);
+      this.respondJSON({s: salt, B: B});
+      this.expectRequest('authenticate/', 'M='+M);
+      this.respondJSON({M: M2});
 
       expect(this.srp.success).toHaveBeenCalled();
       expect(window.location.hash).toBe("#logged_in")
