@@ -28,6 +28,16 @@ function SRP()
 
     // *** Accessor methods ***
 
+    // allows setting the random number A for testing
+    
+    this.calculateAndSetA = function(_a)
+    {
+      a = new BigInteger(_a, 16);
+      A = g.modPow(a, N);
+      Astr = A.toString(16);
+      return Astr;
+    };
+
     // Returns the user's identity
     this.getI = function()
     {

@@ -23,6 +23,7 @@
   <script type="text/javascript" src="../srp_register.js"></script>
   
   <!-- include spec files here... -->
+  <script type="text/javascript" src="specHelper.js"></script>
   <script type="text/javascript" src="signup.js"></script>
   <script type="text/javascript" src="login.js"></script>
 
@@ -64,7 +65,7 @@
     <tr><td>Username:</td><td><input type="text" id="srp_username" value="user" /></td></tr>
     <tr><td>Password:</td><td><input type="password" id="srp_password" value="opensesami"/></td></tr>
     <input type="hidden" id="srp_url" value=""/>
-    <input type="hidden" id="srp_forward" value="/login/"/>
+    <input type="hidden" id="srp_forward" value="#logged_in"/>
     <input type="hidden" id="srp_server" value="django"/>
     </table>
     <input type="submit"/>
