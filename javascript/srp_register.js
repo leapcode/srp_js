@@ -12,19 +12,18 @@ function SRP_REGISTER()
   };
 
   // Receive the salt for registration
-  SRP.prototype.register_receive_salt = function()
+  SRP.prototype.register_receive_salt = function(response)
   {
-    var xhr = that.getxhr();
-    if(xhr.responseXML.getElementsByTagName("salt").length > 0)
+    if(response.salt)
     {
-      var s = that.innerxml(xhr.responseXML.getElementsByTagName("salt")[0]);
+      var s = response.salt;
       var x = that.calcX(s);
       var v = that.getg().modPow(x, that.getN());
       that.register_send_verifier(v.toString(16));
     }
-    else if(xhr.responseXML.getElementsByTagName("error").length > 0)
+    else if(response.error)
     {
-      that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
+      that.error_message(response.error);
     }
   };
   // Send the verifier to the server
@@ -36,10 +35,9 @@ function SRP_REGISTER()
   };
 
   // The user has been registered successfully, now login
-  SRP.prototype.register_user = function()
+  SRP.prototype.register_user = function(response)
   {
-    var xhr = that.getxhr();
-    if(xhr.responseXML.getElementsByTagName("ok").length > 0)
+    if(response.ok)
     {
       that.identify();
     }

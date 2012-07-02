@@ -84,12 +84,6 @@ function SRP()
     }
   };
 
-  // Get the text content of an XML node
-  this.innerxml = function(node)
-  {
-    return node.firstChild.nodeValue;
-  };
-
   // Check whether or not a variable is defined
   function isdefined ( variable)
   {
@@ -117,7 +111,7 @@ function SRP()
     if(xhr){
       xhr.onreadystatechange = function() {
         if(xhr.readyState == 4 && xhr.status == 200) {
-          callback();
+          callback(parseResponse());
         }
       };
       xhr.open("POST", full_url, true);
@@ -131,6 +125,52 @@ function SRP()
     }        
   };
 
+  function parseResponse() {
+    if (responseIsXML()) {
+      return parseXML(xhr.responseXML);
+    } else if (responseIsJSON()) {
+      return JSON.parse(xhr.responseText);
+    } 
+  };
+
+  function responseIsXML() {
+    return (xhr.responseType == 'document') || 
+           (xhr.responseHeaders["Content-Type"].indexOf('application/xml') >= 0)
+  }
+
+  function responseIsJSON() {
+    return (xhr.responseType == 'json') || 
+           (xhr.responseHeaders["Content-Type"].indexOf('application/json') > 0)
+  }
+
+  function parseXML(xml) {
+    if (xml.getElementsByTagName("r").length > 0) {
+      return parseAttributesOfElement(xml.getElementsByTagName("r")[0]);
+    } else {
+      return parseNodes(xml.childNodes);
+    }
+  };
+
+  function parseAttributesOfElement(elem) {
+    var response = {};
+    for (var i = 0; i < elem.attributes.length; i++) {
+      var attrib = elem.attributes[i];
+      if (attrib.specified) {
+        response[attrib.name] = attrib.value;
+      }
+    }
+    return response;
+  };
+
+  function parseNodes(nodes) {
+    var response = {};
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      response[node.tagName] = node.textContent || true;
+    }
+    return response;
+  };
+
   // Start the login process by identifying the user
   this.identify = function()
   {
@@ -140,23 +180,21 @@ function SRP()
   };
 
   // Receive login salts from the server, start calculations
-  function receive_salts()
+  function receive_salts(response)
   {
-    if(xhr.responseXML.getElementsByTagName("r").length > 0)
-    {
-      var response = xhr.responseXML.getElementsByTagName("r")[0];
-      // If there is no algorithm specified, calculate M given s, B, and P
-      if(!response.getAttribute("a"))
-      {
-        calculations(response.getAttribute("s"), response.getAttribute("B"), p);
-        that.ajaxRequest(url+that.paths("authenticate/"), "M="+M, confirm_authentication);
-      }
-      // If there is an algorithm specified, start the login process
-      else
-        upgrade(response.getAttribute("s"), response.getAttribute("B"), response.getAttribute("a"), response.getAttribute("d"));
+    if(response.error) {
+      that.error_message(response.error);
     }
-    else if(xhr.responseXML.getElementsByTagName("error").length > 0)
-      that.error_message(xhr.responseXML.getElementsByTagName("error")[0]);
+    // If there is no algorithm specified, calculate M given s, B, and P
+    else if(!response.a)
+    {
+      calculations(response.s, response.B, p);
+      that.ajaxRequest(url+that.paths("authenticate/"), "M="+M, confirm_authentication);
+    }
+    // If there is an algorithm specified, start the login process
+    else {
+      upgrade(response.s, response.B, response.a, response.d);
+    } 
   };
   // Calculate S, M, and M2
   // This is the client side of the SRP specification
@@ -181,11 +219,11 @@ function SRP()
   };
 
   // Receive M2 from the server and verify it
-  function confirm_authentication()
+  function confirm_authentication(response)
   {
-    if(xhr.responseXML.getElementsByTagName("M").length > 0)
+    if(response.M)
     {
-      if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
+      if(response.M == M2)
       {
         authenticated = true;
         success();
@@ -193,8 +231,8 @@ function SRP()
       else
         that.error_message("Server key does not match");
     }
-    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
-      that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
+    else if (response.error)
+      that.error_message(response.error);
   };
 
   // *** Upgrades ***
@@ -242,11 +280,11 @@ function SRP()
 
   // Receive the server's M, confirming that the server has HASH(p)
   // Next, send P in plaintext (this is the **only** time it should ever be sent plain text)
-  function confirm_upgrade()
+  function confirm_upgrade(response)
   {
-    if(xhr.responseXML.getElementsByTagName("M").length > 0)
+    if(response.M)
     {
-      if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
+      if(response.M == M2)
       {
         K = SHA256(S.toString(16));
         var auth_url = url + that.paths("upgrade/verifier/");
@@ -255,17 +293,17 @@ function SRP()
       else
         that.error_message("Server key does not match");
     }
-    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
+    else if (response.error)
     {
-      that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
+      that.error_message(response.error);
     }
   };
 
   // After sending the password, check that the response is OK, then reidentify
-  function confirm_verifier()
+  function confirm_verifier(response)
   {
     K = null;
-    if(xhr.responseXML.getElementsByTagName("ok").length > 0)
+    if(response.ok)
       that.identify();
     else
       that.error_message("Verifier could not be confirmed");
