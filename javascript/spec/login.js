@@ -5,7 +5,7 @@ describe("Login", function() {
     expect(typeof srp.identify).toBe('function');
   });
 
-  describe("Successfull Login (INTEGRATION)", function (){
+  describe("(INTEGRATION)", function (){
     // a valid auth attempt for the user / password given in the spec runner:
     var a = 'af141ae6';
     var B = '887005895b1f5528b4e4dfdce914f73e763b96d3c901d2f41d8b8cd26255a75';
@@ -50,6 +50,17 @@ describe("Login", function() {
 
       expect(this.srp.success).toHaveBeenCalled();
       expect(window.location.hash).toBe("#logged_in")
+    });
+    
+    it("rejects B = 0", function(){
+      this.srp.error_message = sinon.spy();
+      this.srp.identify();
+
+      this.expectRequest('handshake/', 'I=user&A='+A);
+      this.respondJSON({s: salt, B: 0});
+      // aborting if B=0
+      expect(this.requests).toEqual([]);
+      expect(this.srp.error_message).toHaveBeenCalled();
     });
   });
 

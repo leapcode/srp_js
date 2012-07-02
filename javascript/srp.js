@@ -185,6 +185,11 @@ function SRP()
     if(response.error) {
       that.error_message(response.error);
     }
+    // B = 0 will make the algorithm always succeed - refuse such a server
+    // answer
+    else if(response.B == 0) {
+      that.error_message("Server send random number 0 - this is not allowed");
+    }
     // If there is no algorithm specified, calculate M given s, B, and P
     else if(!response.a)
     {
