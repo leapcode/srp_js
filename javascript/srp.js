@@ -115,7 +115,11 @@ function SRP()
       return;
     }
     if(xhr){
-      xhr.onreadystatechange = callback;
+      xhr.onreadystatechange = function() {
+        if(xhr.readyState == 4 && xhr.status == 200) {
+          callback();
+        }
+      };
       xhr.open("POST", full_url, true);
       xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       xhr.setRequestHeader("Content-length", params.length);
@@ -138,23 +142,21 @@ function SRP()
   // Receive login salts from the server, start calculations
   function receive_salts()
   {
-    if(xhr.readyState == 4 && xhr.status == 200) {
-      if(xhr.responseXML.getElementsByTagName("r").length > 0)
+    if(xhr.responseXML.getElementsByTagName("r").length > 0)
+    {
+      var response = xhr.responseXML.getElementsByTagName("r")[0];
+      // If there is no algorithm specified, calculate M given s, B, and P
+      if(!response.getAttribute("a"))
       {
-        var response = xhr.responseXML.getElementsByTagName("r")[0];
-        // If there is no algorithm specified, calculate M given s, B, and P
-        if(!response.getAttribute("a"))
-        {
-          calculations(response.getAttribute("s"), response.getAttribute("B"), p);
-          that.ajaxRequest(url+that.paths("authenticate/"), "M="+M, confirm_authentication);
-        }
-        // If there is an algorithm specified, start the login process
-        else
-          upgrade(response.getAttribute("s"), response.getAttribute("B"), response.getAttribute("a"), response.getAttribute("d"));
+        calculations(response.getAttribute("s"), response.getAttribute("B"), p);
+        that.ajaxRequest(url+that.paths("authenticate/"), "M="+M, confirm_authentication);
       }
-      else if(xhr.responseXML.getElementsByTagName("error").length > 0)
-        that.error_message(xhr.responseXML.getElementsByTagName("error")[0]);
+      // If there is an algorithm specified, start the login process
+      else
+        upgrade(response.getAttribute("s"), response.getAttribute("B"), response.getAttribute("a"), response.getAttribute("d"));
     }
+    else if(xhr.responseXML.getElementsByTagName("error").length > 0)
+      that.error_message(xhr.responseXML.getElementsByTagName("error")[0]);
   };
   // Calculate S, M, and M2
   // This is the client side of the SRP specification
@@ -181,20 +183,18 @@ function SRP()
   // Receive M2 from the server and verify it
   function confirm_authentication()
   {
-    if(xhr.readyState == 4 && xhr.status == 200) {
-      if(xhr.responseXML.getElementsByTagName("M").length > 0)
+    if(xhr.responseXML.getElementsByTagName("M").length > 0)
+    {
+      if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
       {
-        if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
-        {
-          authenticated = true;
-          success();
-        }
-        else
-          that.error_message("Server key does not match");
+        authenticated = true;
+        success();
       }
-      else if (xhr.responseXML.getElementsByTagName("error").length > 0)
-        that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
+      else
+        that.error_message("Server key does not match");
     }
+    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
+      that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
   };
 
   // *** Upgrades ***
@@ -244,35 +244,31 @@ function SRP()
   // Next, send P in plaintext (this is the **only** time it should ever be sent plain text)
   function confirm_upgrade()
   {
-    if(xhr.readyState == 4 && xhr.status == 200) {
-      if(xhr.responseXML.getElementsByTagName("M").length > 0)
+    if(xhr.responseXML.getElementsByTagName("M").length > 0)
+    {
+      if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
       {
-        if(that.innerxml(xhr.responseXML.getElementsByTagName("M")[0]) == M2)
-        {
-          K = SHA256(S.toString(16));
-          var auth_url = url + that.paths("upgrade/verifier/");
-          that.ajaxRequest(auth_url, "p="+encrypt(p)+"&l="+p.length, confirm_verifier);
-        }
-        else
-          that.error_message("Server key does not match");
+        K = SHA256(S.toString(16));
+        var auth_url = url + that.paths("upgrade/verifier/");
+        that.ajaxRequest(auth_url, "p="+encrypt(p)+"&l="+p.length, confirm_verifier);
       }
-      else if (xhr.responseXML.getElementsByTagName("error").length > 0)
-      {
-        that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
-      }
+      else
+        that.error_message("Server key does not match");
+    }
+    else if (xhr.responseXML.getElementsByTagName("error").length > 0)
+    {
+      that.error_message(that.innerxml(xhr.responseXML.getElementsByTagName("error")[0]));
     }
   };
 
   // After sending the password, check that the response is OK, then reidentify
   function confirm_verifier()
   {
-    if(xhr.readyState == 4 && xhr.status == 200) {
-      K = null;
-      if(xhr.responseXML.getElementsByTagName("ok").length > 0)
-        that.identify();
-      else
-        that.error_message("Verifier could not be confirmed");
-    }
+    K = null;
+    if(xhr.responseXML.getElementsByTagName("ok").length > 0)
+      that.identify();
+    else
+      that.error_message("Verifier could not be confirmed");
   };
 
   // This loads javascript libraries. Fname is the path to the library to be imported
