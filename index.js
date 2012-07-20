@@ -1,1 +1,1 @@
-//= require_tree srp
+//= require_tree ./lib
