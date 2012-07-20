@@ -31,11 +31,11 @@ function SRP_REGISTER()
   {
     var params = "v="+v;
     var auth_url = that.geturl() + that.paths("register/user/");
-    that.ajaxRequest(auth_url, params, that.register_user);
+    that.ajaxRequest(auth_url, params, that.registered_user);
   };
 
   // The user has been registered successfully, now login
-  SRP.prototype.register_user = function(response)
+  SRP.prototype.registered_user = function(response)
   {
     if(response.ok)
     {

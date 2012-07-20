@@ -135,12 +135,12 @@ function SRP()
 
   function responseIsXML() {
     return (xhr.responseType == 'document') || 
-           (xhr.responseHeaders["Content-Type"].indexOf('application/xml') >= 0)
+           (xhr.getResponseHeader("Content-Type").indexOf('application/xml') >= 0)
   }
 
   function responseIsJSON() {
     return (xhr.responseType == 'json') || 
-           (xhr.responseHeaders["Content-Type"].indexOf('application/json') >= 0)
+           (xhr.getResponseHeader("Content-Type").indexOf('application/json') >= 0)
   }
 
   function parseXML(xml) {
@@ -231,7 +231,7 @@ function SRP()
       if(response.M == M2)
       {
         authenticated = true;
-        success();
+        that.success();
       }
       else
         that.error_message("Server key does not match");
@@ -343,7 +343,10 @@ function SRP()
     }        
   }
 
-  function success()
+  // This function is called when authentication is successful.
+  // Developers can set this to other functions in specific implementations
+  // and change the functionality.
+  this.success = function()
   {
     var forward_url = document.getElementById("srp_forward").value;
     if(forward_url.charAt(0) != "#")
@@ -351,12 +354,8 @@ function SRP()
     else
     {
       window.location = forward_url;
-      that.success();
+      alert("Login successful.");
     }
-  };
-  this.success = function()
-  {
-    alert("Login successful.");
   };
   // If someone wants to use the session key for encrypting traffic, they can
   // access the key with this function.
@@ -374,13 +373,6 @@ function SRP()
       return K;
   };
 
-  // This function is called when authentication is successful.
-  // Developers can set this to other functions in specific implementations
-  // and change the functionality.
-  /*this.success = function()
-   {
-     alert("Authentication successful.");
-     };*/
     // If an error occurs, raise it as an alert.
     // Developers can set this to an alternative function to handle erros differently.
     this.error_message = function(t)

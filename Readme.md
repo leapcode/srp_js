@@ -2,6 +2,7 @@ imported to github from: https://code.google.com/p/srp-js/
 
 License: [New BSD License](http://www.opensource.org/licenses/bsd-license.php)
 
+
 Many websites today require some form of authentication to access the site's full functionality. Unfortunately, many of these websites do not use secure authentication protocols.
 
 In some cases, websites will store user passwords in their database. If the database ever becomes compromised, an attacker could authenticate as any user he wanted.
@@ -14,4 +15,6 @@ The Secure Remote Password protocol addresses this problem. First presented by T
 
 This project aims to provide a strong javascript implementation of SRP that will provide some peace of mind when using websites that do not use HTTPS. Due to the nature of HTTP, it is not invulnerable to man-in-the-middle attacks, but it should provide strong security against passive eavesdroppers, which are increasingly common in the age of wireless internet.
 
-To accompany the Javascript implementation of the client, I plan to create server side implementations in Django, PHP, and ASP.NET. Currently, only the Django implementation has begun. 
+To accompany the Javascript implementation of the client, the [original repository](https://code.google.com/p/srp-js/) had a django server. 
+
+[ruby-srp](https://github.com/leapcode/ruby-srp) contains client and server implementations in ruby that work with srp-js. It also ships an example using srp-js as the client.

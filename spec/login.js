@@ -37,7 +37,6 @@ describe("Login", function() {
       this.respondXML("<M>"+M2+"</M>");
       
       expect(this.srp.success).toHaveBeenCalled();
-      expect(window.location.hash).toBe("#logged_in")
     });
 
     it("works with JSON responses", function(){
@@ -49,7 +48,6 @@ describe("Login", function() {
       this.respondJSON({M: M2});
 
       expect(this.srp.success).toHaveBeenCalled();
-      expect(window.location.hash).toBe("#logged_in")
     });
     
     it("rejects B = 0", function(){
