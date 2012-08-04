@@ -28,7 +28,7 @@ describe("Signup", function() {
     this.srp.register();
     this.expectRequest('register/salt/', "I=user")
     this.respondXML("<salt>5d3055e0acd3ddcfc15</salt>");
-    expect(callback).toHaveBeenCalledWith("adcd57b4a4a05c2e205b0b7b30014d9ff635d8d8db2f502f08e9b9c132800c44", this.srp.registered_user);
+    expect(callback).toHaveBeenCalledWith(this.srp, this.srp.registered_user);
   });
 
   it("identifies after successful registration (INTEGRATION)", function(){
