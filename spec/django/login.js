@@ -16,8 +16,10 @@ describe("Login", function() {
 
 
     beforeEach(function() {
-      this.srp = new SRP();
-      A = this.srp.calculateAndSetA(a);
+      var srp = new SRP();
+      var session = new srp.Session();
+      this.srp = new SRP(null, session)
+      A = session.calculateAndSetA(a);
 
       specHelper.setupFakeXHR.apply(this);
 
@@ -51,14 +53,14 @@ describe("Login", function() {
     });
     
     it("rejects B = 0", function(){
-      this.srp.error_message = sinon.spy();
+      this.srp.error = sinon.spy();
       this.srp.identify();
 
       this.expectRequest('handshake/', 'I=user&A='+A);
       this.respondJSON({s: salt, B: 0});
       // aborting if B=0
       expect(this.requests).toEqual([]);
-      expect(this.srp.error_message).toHaveBeenCalled();
+      expect(this.srp.error).toHaveBeenCalled();
     });
   });
 
