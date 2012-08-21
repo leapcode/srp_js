@@ -7,7 +7,7 @@ jqueryRest = function() {
 
   function paths(path)
   {
-    return path
+    return path;
   }
 
   // Perform ajax requests at the specified path, with the specified parameters
@@ -15,12 +15,13 @@ jqueryRest = function() {
   function ajaxRequest(relative_path, params, callback)
   {
     var full_url = this.geturl() + this.paths(relative_path);
-    if( window.XMLHttpRequest)
+    if( window.XMLHttpRequest) {
       xhr = new XMLHttpRequest();
+    }
     else if (window.ActiveXObject){
-      try{
+      try {
         xhr = new ActiveXObject("Microsoft.XMLHTTP");
-      }catch (e){}
+      } catch (e){}
     }
     else
     {
@@ -42,7 +43,7 @@ jqueryRest = function() {
     {
       session.error_message("Ajax failed.");
     }        
-  };
+  }
 
   function parseResponse() {
     if (responseIsXML()) {
@@ -50,16 +51,16 @@ jqueryRest = function() {
     } else if (responseIsJSON()) {
       return JSON.parse(xhr.responseText);
     } 
-  };
+  }
 
   function responseIsXML() {
     return (xhr.responseType == 'document') || 
-           (xhr.getResponseHeader("Content-Type").indexOf('application/xml') >= 0)
+           (xhr.getResponseHeader("Content-Type").indexOf('application/xml') >= 0);
   }
 
   function responseIsJSON() {
     return (xhr.responseType == 'json') || 
-           (xhr.getResponseHeader("Content-Type").indexOf('application/json') >= 0)
+           (xhr.getResponseHeader("Content-Type").indexOf('application/json') >= 0);
   }
 
   function parseXML(xml) {
@@ -68,7 +69,7 @@ jqueryRest = function() {
     } else {
       return parseNodes(xml.childNodes);
     }
-  };
+  }
 
   function parseAttributesOfElement(elem) {
     var response = {};
@@ -79,7 +80,7 @@ jqueryRest = function() {
       }
     }
     return response;
-  };
+  }
 
   function parseNodes(nodes) {
     var response = {};
@@ -88,7 +89,7 @@ jqueryRest = function() {
       response[node.tagName] = node.textContent || true;
     }
     return response;
-  };
+  }
 
   // we do not fetch the salt from the server
   function register(session, callback)
@@ -123,5 +124,5 @@ jqueryRest = function() {
     handshake: handshake,
     authenticate: authenticate,
     upgrade: upgrade
-  }
-}
+  };
+};

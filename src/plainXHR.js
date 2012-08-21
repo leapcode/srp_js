@@ -13,8 +13,9 @@ SRP.prototype.Remote = function() {
   // Calling back the specified function.
   function ajaxRequest(url, params, callback)
   {
-    if( window.XMLHttpRequest)
+    if( window.XMLHttpRequest) {
       xhr = new XMLHttpRequest();
+    }
     else if (window.ActiveXObject){
       try{
         xhr = new ActiveXObject("Microsoft.XMLHTTP");
@@ -40,7 +41,7 @@ SRP.prototype.Remote = function() {
     {
       session.error_message("Ajax failed.");
     }        
-  };
+  }
 
   function parseResponse() {
     if (responseIsXML()) {
@@ -48,16 +49,16 @@ SRP.prototype.Remote = function() {
     } else if (responseIsJSON()) {
       return JSON.parse(xhr.responseText);
     } 
-  };
+  }
 
   function responseIsXML() {
     return (xhr.responseType == 'document') || 
-           (xhr.getResponseHeader("Content-Type").indexOf('application/xml') >= 0)
+           (xhr.getResponseHeader("Content-Type").indexOf('application/xml') >= 0);
   }
 
   function responseIsJSON() {
     return (xhr.responseType == 'json') || 
-           (xhr.getResponseHeader("Content-Type").indexOf('application/json') >= 0)
+           (xhr.getResponseHeader("Content-Type").indexOf('application/json') >= 0);
   }
 
   function parseXML(xml) {
@@ -66,7 +67,7 @@ SRP.prototype.Remote = function() {
     } else {
       return parseNodes(xml.childNodes);
     }
-  };
+  }
 
   function parseAttributesOfElement(elem) {
     var response = {};
@@ -77,7 +78,7 @@ SRP.prototype.Remote = function() {
       }
     }
     return response;
-  };
+  }
 
   function parseNodes(nodes) {
     var response = {};
@@ -86,35 +87,34 @@ SRP.prototype.Remote = function() {
       response[node.tagName] = node.textContent || true;
     }
     return response;
-  };
+  }
   
   // Drupal version fetches the salt from the server. No idea why but this
   // should still do it.
   this.register = function(session, callback)
   {
-    var that = this;
-    ajaxRequest("register/salt/", "I="+session.getI(), receive_salt);
-
-    function receive_salt(response)
-    {
+    function receive_salt(response) {
       if(response.salt)
       {
         var s = response.salt;
         var v = session.getV(s);
         that.sendVerifier(session, callback);
       }
-    };
-  }
+    }
+
+    var that = this;
+    ajaxRequest("register/salt/", "I="+session.getI(), receive_salt);
+  };
 
   this.sendVerifier = function(session, callback) {
     ajaxRequest("register/user/", "v="+session.getV().toString(16), callback);
-  }
+  };
 
   this.handshake = function(session, callback) {
     ajaxRequest("handshake/", "I="+session.getI()+"&A="+session.getAstr(), callback);
-  }
+  };
 
   this.authenticate = function(session, callback) {
     ajaxRequest("authenticate/", "M="+session.getM(), callback);
-  }
-}
+  };
+};
