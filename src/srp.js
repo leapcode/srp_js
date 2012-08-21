@@ -18,13 +18,13 @@ function SRP(remote, session)
     {
       // B = 0 will make the algorithm always succeed
       // -> refuse such a server answer
-      if(response.B == 0) {
+      if(response.B === 0) {
         srp.error("Server send random number 0 - this is not allowed");
       } else {
         session.calculations(response.s, response.B);
-        remote.authenticate(session, confirm_authentication)
+        remote.authenticate(session, confirm_authentication);
       }
-    };
+    }
 
     // Receive M2 from the server and verify it
     // If an error occurs, raise it as an alert.
