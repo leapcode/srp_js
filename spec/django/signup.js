@@ -13,22 +13,13 @@ describe("Signup", function() {
     expect(typeof this.srp.register).toBe('function');
   });
 
-  it("fetches a salt from /register/salt", function(){
-    var callback = sinon.spy();
-    this.srp.register_receive_salt = callback;
-    this.srp.register();
-    this.expectRequest('register/salt/', "I=user")
-    this.respondXML("<salt>5d3055e0acd3ddcfc15</salt>");
-    expect(callback.called).toBeTruthy();
-  });
-
   it("receives the salt from /register/salt", function(){
     var callback = sinon.spy();
-    this.srp.remote.register_send_verifier = callback;
+    this.srp.remote.sendVerifier = callback;
     this.srp.register();
     this.expectRequest('register/salt/', "I=user")
     this.respondXML("<salt>5d3055e0acd3ddcfc15</salt>");
-    expect(callback).toHaveBeenCalledWith(this.srp, this.srp.registered_user);
+    expect(callback).toHaveBeenCalledWith(this.srp.session, this.srp.registered_user);
   });
 
   it("identifies after successful registration (INTEGRATION)", function(){
