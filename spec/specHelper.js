@@ -15,7 +15,7 @@ var specHelper = (function() {
   function expectRequest(url, content) {
     expect(this.requests.length).toBe(1);
     expect(this.requests[0].url).toBe(url);
-    expect(this.requests[0].requestBody).toBe(content);
+    expect(decodeURI(this.requests[0].requestBody)).toBe(content);
   }
 
   function respondXML(content) {
