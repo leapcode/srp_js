@@ -16,6 +16,7 @@ describe("Login", function() {
     var b = '6aa5c88d1877af9907ccefad31083e1102a7121dc04706f681f66c8680fb7f05'; 
     var B = 'd56a80aaafdf9f70598b5d1184f122f326a333fafd37ab76d6f7fba4a9c4ee59545be056335150bd64f04880bc8e76949469379fe9de17cf6f36f3ee11713d05f63050486bc73c545163169999ff01b55c0ca4e90d8856a6e3d3a6ffc70b70d993a5308a37a5c2399874344e083e72b3c9afa083d312dfe9096ea9a65023f135';
     var salt = '628365a0';
+    var K = 'db6ec0bdab81742315861a828323ff492721bdcd114077a4124bc425e4bf328b';
     var M = '640e51d5ac5461591c31811221261f0e0eae7c08ce43c85e9556adbd94ed8c26';
     var M2 = '49e48f8ac8c4da0e8a7374f73eeedbee2266e123d23fc1be1568523fc9c24b1e';
     var A_, callback;
@@ -36,6 +37,11 @@ describe("Login", function() {
 
     it("starts with the right A", function(){
       expect(A_).toBe(A);
+    });
+
+    it("calculates the right key", function(){
+      this.srp.session.calculations(salt, B);
+      expect(this.srp.session.key()).toBe(K);
     });
 
     it("works with JSON responses", function(){
@@ -63,4 +69,3 @@ describe("Login", function() {
 
 
 });
-
