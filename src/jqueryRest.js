@@ -68,16 +68,13 @@ jqueryRest = function() {
     }, callback);
   }
 
-  function handshake(I, Astr, callback) {
-    ajaxRequest("handshake/", "I="+I+"&A="+Astr, callback);
+  function handshake(session, callback) {
+    ajaxRequest("sessions", { login: session.getI(),
+      A: session.getAstr()}, callback);
   }
 
-  function authenticate(M, callback) {
-    ajaxRequest("authenticate/", "M="+M, callback);
-  }
-
-  function upgrade(M, callback) {
-    ajaxRequest("upgrade/authenticate/", "M="+M, callback);
+  function authenticate(session, callback) {
+    ajaxRequest("sessions/" + session.getI(), {client_auth: session.getM()}, callback);
   }
 
   return {
@@ -85,7 +82,6 @@ jqueryRest = function() {
     register: register,
     register_send_verifier: sendVerifier,
     handshake: handshake,
-    authenticate: authenticate,
-    upgrade: upgrade
+    authenticate: authenticate
   };
 };

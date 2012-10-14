@@ -12,6 +12,7 @@ var specHelper = (function() {
     this.respondXML = respondXML;
   }
 
+  // TODO: validate http verb
   function expectRequest(url, content) {
     expect(this.requests.length).toBe(1);
     expect(this.requests[0].url).toBe(url);
