@@ -19,9 +19,14 @@ function SRP(remote, session)
       // B = 0 will make the algorithm always succeed
       // -> refuse such a server answer
       if(response.B === 0) {
-        srp.error("Server send random number 0 - this is not allowed");
-      } else {
-        session.calculations(response.s, response.B);
+        srp.error("Server send random number 0 - could not login.");
+      }
+      else if(! response.salt || response.salt === 0) {
+        srp.error("Server failed to send salt - could not login.");
+      } 
+      else 
+      {
+        session.calculations(response.salt, response.B);
         remote.authenticate(session, confirm_authentication);
       }
     }

@@ -19,6 +19,7 @@ describe("Login", function() {
     var K = 'db6ec0bdab81742315861a828323ff492721bdcd114077a4124bc425e4bf328b';
     var M = '640e51d5ac5461591c31811221261f0e0eae7c08ce43c85e9556adbd94ed8c26';
     var M2 = '49e48f8ac8c4da0e8a7374f73eeedbee2266e123d23fc1be1568523fc9c24b1e';
+    var V = '6f5fb78184161f4191babaf1a700ff70e4d261054d002466d05f2ec2b45fc8807dbd7ce25dc3c882331eb8bf72a22caf2868e3438477be7ab151d3281d00aa1a9fc5cb6a725abd99e11882f77d52b56b83f95c0ba0b8fbbf4ee1fbb445c35adb5d1aaa48ba761c4a4417f6bb821fb61956c919e47740b316b960653303fe7190';
     var A_, callback;
 
 
@@ -39,6 +40,10 @@ describe("Login", function() {
       expect(A_).toBe(A);
     });
 
+    it("starts with the right verifier", function(){
+      expect(this.srp.session.getV().toString(16)).toBe(V);
+    });
+
     it("calculates the right key", function(){
       this.srp.session.calculations(salt, B);
       expect(this.srp.session.key()).toBe(K);
@@ -48,7 +53,7 @@ describe("Login", function() {
       this.srp.identify();
 
       this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
-      this.respondJSON({s: salt, B: B});
+      this.respondJSON({salt: salt, B: B});
       this.expectRequest('sessions/'+login, 'client_auth='+M, 'PUT');
       this.respondJSON({M: M2});
 
@@ -60,7 +65,7 @@ describe("Login", function() {
       this.srp.identify();
 
       this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
-      this.respondJSON({s: salt, B: 0});
+      this.respondJSON({salt: salt, B: 0});
       // aborting if B=0
       expect(this.requests).toEqual([]);
       expect(this.srp.error).toHaveBeenCalled();
