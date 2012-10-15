@@ -1,12 +1,5 @@
 jqueryRest = function() {
 
-  // Perform ajax requests at the specified path, with the specified parameters
-  // Calling back the specified function.
-  function ajaxRequest(relative_path, params, callback)
-  {
-    $.post(relative_path, params, callback)
-  }
-
   function parseResponse() {
     if (responseIsXML()) {
       return parseXML(xhr.responseXML);
@@ -61,7 +54,7 @@ jqueryRest = function() {
 
   function sendVerifier(session, callback) {
     var salt = session.getSalt();
-    ajaxRequest("users", { user:
+    $.post("users", { user:
       { login: session.getI(),
         password_salt: salt,
         password_verifier: session.getV(salt).toString(16)}
@@ -69,16 +62,20 @@ jqueryRest = function() {
   }
 
   function handshake(session, callback) {
-    ajaxRequest("sessions", { login: session.getI(),
+    $.post("sessions", { login: session.getI(),
       A: session.getAstr()}, callback);
   }
 
-  function authenticate(session, callback) {
-    ajaxRequest("sessions/" + session.getI(), {client_auth: session.getM()}, callback);
+  function authenticate(session, success) {
+    $.ajax({
+      url: "sessions/" + session.getI(),
+      type: 'PUT',
+      data: {client_auth: session.getM()},
+      success: success
+    });
   }
 
   return {
-    ajaxRequest: ajaxRequest,
     register: register,
     register_send_verifier: sendVerifier,
     handshake: handshake,

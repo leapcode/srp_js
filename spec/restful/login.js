@@ -49,21 +49,21 @@ describe("Login", function() {
 
       this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({s: salt, B: B});
-      this.expectRequest('sessions/'+login, 'client_auth='+M);
+      this.expectRequest('sessions/'+login, 'client_auth='+M, 'PUT');
       this.respondJSON({M: M2});
 
       expect(this.srp.success).toHaveBeenCalled();
     });
     
     it("rejects B = 0", function(){
-      this.srp.error_message = sinon.spy();
+      this.srp.error = sinon.spy();
       this.srp.identify();
 
       this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({s: salt, B: 0});
       // aborting if B=0
       expect(this.requests).toEqual([]);
-      expect(this.srp.error_message).toHaveBeenCalled();
+      expect(this.srp.error).toHaveBeenCalled();
     });
   });
 
