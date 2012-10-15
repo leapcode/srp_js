@@ -1,10 +1,10 @@
 SRP.prototype.Session = function() {
   
   // Variables session will be used in the SRP protocol
-  var Nstr = "115b8b692e0e045692cf280b436735c77a5a9e8a9e7ed56c965f87db5b2a2ece3";
+  var Nstr = "eeaf0ab9adb38dd69c33f80afa8fc5e86072618775ff3c0b9ea2314c9c256576d674df7496ea81d3383b4813d692c6e0e0d5d8e250b98be48e495c1d6089dad15dc7d7b46154d6b6ce8ef4ad69b15d4982559b297bcf1885c529f566660e57ec68edbc3c05726cc02fd4cbf4976eaa9afd5138fe8376435b9fc61d2fc0eb06e3";
   var N = new BigInteger(Nstr, 16);
   var g = new BigInteger("2");
-  var k = new BigInteger("c46d46600d87fef149bd79b81119842f3c20241fda67d06ef412d8f6d9479c58", 16);
+  var k = new BigInteger("bf66c44a428916cad64aa7c679f3fd897ad4c375e9bbb4cbf2f5de241d618ef0", 16);
 
   var rng = new SecureRandom();
   var a = new BigInteger(32, rng);
@@ -66,9 +66,9 @@ SRP.prototype.Session = function() {
   };
 
   // Calculates the X value and return it as a BigInteger
-  this.calcX = function(s)
+  this.calcX = function(salt)
   {
-    return new BigInteger(SHA256(s + SHA256(I + ":" + pass)), 16);
+    return new BigInteger(SHA256(hex2a(salt + SHA256(I + ":" + pass))), 16);
   };
 
   this.getV = function(salt)
@@ -85,18 +85,30 @@ SRP.prototype.Session = function() {
     var B = new BigInteger(ephemeral, 16); 
     var Bstr = ephemeral;
     // u = H(A,B)
-    var u = new BigInteger(SHA256(Astr + Bstr), 16); 
+    var u = new BigInteger(SHA256(hex2a(Astr + Bstr)), 16); 
     // x = H(s, H(I:p))
-    var x = new BigInteger(SHA256(salt + SHA256(I + ":" + pass)), 16);
+    var x = this.calcX(salt);
     //S = (B - kg^x) ^ (a + ux)
     var kgx = k.multiply(g.modPow(x, N));  
     var aux = a.add(u.multiply(x)); 
     S = B.subtract(kgx).modPow(aux, N); 
-    // M = H(H(N) xor H(g), H(I), s, A, B, K)
-    var Mstr = A.toString(16) + B.toString(16) + S.toString(16); 
-    M = SHA256(Mstr);
-    M2 = SHA256(A.toString(16) + M + S.toString(16)); 
+    K = SHA256(hex2a(S.toString(16)));
+    this.calcM(salt, A.toString(16), B.toString(16));
+  };
+
+  // M = H(H(N) xor H(g), H(I), s, A, B, K)
+  this.calcM = function(salt, Astr, Bstr) {
+    var hashN = SHA256(hex2a(N.toString(16)))
+    var hashG = SHA256(hex2a(g.toString(16)))
+    var hexString = hexXor(hashN, hashG);
+    hexString += SHA256(I);
+    hexString += salt;
+    hexString += Astr;
+    hexString += Bstr;
+    hexString += K
+    M = SHA256(hex2a(hexString));
     //M2 = H(A, M, K)
+    M2 = SHA256(hex2a(Astr + M + K));
   };
 
   this.getM = function() {
@@ -112,13 +124,11 @@ SRP.prototype.Session = function() {
   // access the key with this function.
   this.key = function()
   {
-    if(K) return K;
-    if(authenticated) {
-      K = SHA256(S.toString(16));
+    if(K) {
       return K;
-    }
-    else
+    } else {
       this.onError("User has not been authenticated.");
+    }
   };
 
   // Encrypt plaintext using slowAES
@@ -135,4 +145,23 @@ SRP.prototype.Session = function() {
       retstring = retstring.replace("+", "_");
     return retstring;
   };
+
+  function hex2a(hex) {
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2)
+      str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
+  }
+
+  function hexXor(a, b) {
+    var str = '';
+    for (var i = 0; i < a.length; i += 2) {
+      var xor = parseInt(a.substr(i, 2), 16) ^ parseInt(b.substr(i, 2), 16)
+      xor = xor.toString(16);
+      str += (xor.length == 1) ? ("0" + xor) : xor
+    }
+    return str;
+  }
+
+
 }

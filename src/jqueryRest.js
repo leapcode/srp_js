@@ -1,50 +1,5 @@
 jqueryRest = function() {
 
-  function getUrl()
-  {
-    return "";
-  }
-
-  function paths(path)
-  {
-    return path;
-  }
-
-  // Perform ajax requests at the specified path, with the specified parameters
-  // Calling back the specified function.
-  function ajaxRequest(relative_path, params, callback)
-  {
-    var full_url = this.geturl() + this.paths(relative_path);
-    if( window.XMLHttpRequest) {
-      xhr = new XMLHttpRequest();
-    }
-    else if (window.ActiveXObject){
-      try {
-        xhr = new ActiveXObject("Microsoft.XMLHTTP");
-      } catch (e){}
-    }
-    else
-    {
-      session.error_message("Ajax not supported.");
-      return;
-    }
-    if(xhr){
-      xhr.onreadystatechange = function() {
-        if(xhr.readyState == 4 && xhr.status == 200) {
-          callback(parseResponse());
-        }
-      };
-      xhr.open("POST", full_url, true);
-      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      xhr.setRequestHeader("Content-length", params.length);
-      xhr.send(params);
-    }
-    else
-    {
-      session.error_message("Ajax failed.");
-    }        
-  }
-
   function parseResponse() {
     if (responseIsXML()) {
       return parseXML(xhr.responseXML);
@@ -98,31 +53,32 @@ jqueryRest = function() {
   }
 
   function sendVerifier(session, callback) {
-    this.ajaxRequest("users", "user[login]=" + session.getI() +
-      "&user[password_salt]=" + session.getSalt() +
-      "&user[password_verifier]=" + session.getV().toString(16), callback);
+    var salt = session.getSalt();
+    $.post("users", { user:
+      { login: session.getI(),
+        password_salt: salt,
+        password_verifier: session.getV(salt).toString(16)}
+    }, callback);
   }
 
-  function handshake(I, Astr, callback) {
-    this.ajaxRequest("handshake/", "I="+I+"&A="+Astr, callback);
+  function handshake(session, callback) {
+    $.post("sessions", { login: session.getI(),
+      A: session.getAstr()}, callback);
   }
 
-  function authenticate(M, callback) {
-    this.ajaxRequest("authenticate/", "M="+M, callback);
-  }
-
-  function upgrade(M, callback) {
-    this.ajaxRequest("upgrade/authenticate/", "M="+M, callback);
+  function authenticate(session, success) {
+    $.ajax({
+      url: "sessions/" + session.getI(),
+      type: 'PUT',
+      data: {client_auth: session.getM()},
+      success: success
+    });
   }
 
   return {
-    geturl: getUrl,
-    paths: paths,
-    ajaxRequest: ajaxRequest,
     register: register,
     register_send_verifier: sendVerifier,
     handshake: handshake,
-    authenticate: authenticate,
-    upgrade: upgrade
+    authenticate: authenticate
   };
 };
