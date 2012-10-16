@@ -22,15 +22,12 @@ SRP.prototype.Session = function(login, password) {
   var authenticated = false;
   var I = login || document.getElementById("srp_username").value;
   var pass = password || document.getElementById("srp_password").value;
-  var x, V;
-  var salt;
 
   // *** Accessor methods ***
 
   // allows setting the random number A for testing
 
-  this.calculateAndSetA = function(_a)
-  {
+  this.calculateAndSetA = function(_a) {
     a = new BigInteger(_a, 16);
     A = g.modPow(a, N);
     Astr = A.toString(16);
@@ -42,40 +39,33 @@ SRP.prototype.Session = function(login, password) {
   }
 
   // Returns the user's identity
-  this.getI = function()
-  {
+  this.getI = function() {
     return I;
   };
 
   // some 16 byte random number
   this.getSalt = function() {
-    salt = salt || new BigInteger(64, rng).toString(16);
-    return salt
+    return new BigInteger(64, rng).toString(16);
   }
 
   // Returns the BigInteger, g
-  this.getg = function()
-  {
+  this.getg = function() {
     return g;
   };
 
   // Returns the BigInteger, N
-  this.getN = function()
-  {
+  this.getN = function() {
     return N;
   };
 
   // Calculates the X value and return it as a BigInteger
-  this.calcX = function(salt)
-  {
-    x = x || new BigInteger(SHA256(hex2a(salt + SHA256(I + ":" + pass))), 16);
-    return x;
+  this.calcX = function(salt) {
+    return new BigInteger(SHA256(hex2a(salt + SHA256(I + ":" + pass))), 16);
   };
 
   this.getV = function(salt)
   {
-    V = V || this.getg().modPow(this.calcX(salt), this.getN());
-    return V;
+    return this.getg().modPow(this.calcX(salt), this.getN());
   }
 
   // Calculate S, M, and M2
