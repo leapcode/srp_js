@@ -1,4 +1,4 @@
-SRP.prototype.Session = function() {
+SRP.prototype.Session = function(login, password) {
   
   // Variables session will be used in the SRP protocol
   var Nstr = "eeaf0ab9adb38dd69c33f80afa8fc5e86072618775ff3c0b9ea2314c9c256576d674df7496ea81d3383b4813d692c6e0e0d5d8e250b98be48e495c1d6089dad15dc7d7b46154d6b6ce8ef4ad69b15d4982559b297bcf1885c529f566660e57ec68edbc3c05726cc02fd4cbf4976eaa9afd5138fe8376435b9fc61d2fc0eb06e3";
@@ -20,9 +20,9 @@ SRP.prototype.Session = function() {
   var M = null;
   var M2 = null;
   var authenticated = false;
-  var I = document.getElementById("srp_username").value;
-  var pass = document.getElementById("srp_password").value;
-  var V;
+  var I = login || document.getElementById("srp_username").value;
+  var pass = password || document.getElementById("srp_password").value;
+  var x, V;
   var salt;
 
   // *** Accessor methods ***
@@ -68,7 +68,8 @@ SRP.prototype.Session = function() {
   // Calculates the X value and return it as a BigInteger
   this.calcX = function(salt)
   {
-    return new BigInteger(SHA256(hex2a(salt + SHA256(I + ":" + pass))), 16);
+    x = x || new BigInteger(SHA256(hex2a(salt + SHA256(I + ":" + pass))), 16);
+    return x;
   };
 
   this.getV = function(salt)
