@@ -35,7 +35,7 @@ function SRP(remote, session)
     // If an error occurs, raise it as an alert.
     function confirm_authentication(response)
     {
-      if (session.validate(response.M))
+      if (session.validate(response.M2))
         srp.success();
       else
         srp.error("Server key does not match");

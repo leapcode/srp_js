@@ -55,7 +55,7 @@ describe("Login", function() {
       this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: B});
       this.expectRequest('sessions/'+login, 'client_auth='+M, 'PUT');
-      this.respondJSON({M: M2});
+      this.respondJSON({M2: M2});
 
       expect(this.srp.success).toHaveBeenCalled();
     });
