@@ -5,7 +5,7 @@ describe("Login", function() {
     expect(typeof srp.identify).toBe('function');
   });
 
-  describe("(INTEGRATION)", function (){
+  describe("(Compatibility with py-srp)", function (){
     // these need to be the same as in the spec runner:
     var login = "testuser";
     var password = "password";
@@ -29,46 +29,48 @@ describe("Login", function() {
       specHelper.setupFakeXHR.apply(this);
 
       A_ = this.srp.session.calculateAndSetA(a)
-      this.srp.success = sinon.spy();
     });
 
     afterEach(function() {
       this.xhr.restore();
     });
 
-    it("starts with the right A", function(){
+    it("calculates the same A", function(){
       expect(A_).toBe(A);
     });
 
-    it("starts with the right verifier", function(){
+    it("calculates the same verifier", function(){
       expect(this.srp.session.getV().toString(16)).toBe(V);
     });
 
-    it("calculates the right key", function(){
+    it("calculates the same key", function(){
       this.srp.session.calculations(salt, B);
       expect(this.srp.session.key()).toBe(K);
     });
 
     it("works with JSON responses", function(){
-      this.srp.identify();
+      var success = sinon.spy();
+      this.srp.identify(success);
 
       this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: B});
       this.expectRequest('sessions/'+login, 'client_auth='+M, 'PUT');
       this.respondJSON({M2: M2});
 
-      expect(this.srp.success).toHaveBeenCalled();
+      expect(success).toHaveBeenCalled();
     });
     
     it("rejects B = 0", function(){
-      this.srp.error = sinon.spy();
-      this.srp.identify();
+      var success = sinon.spy();
+      var error = sinon.spy();
+      this.srp.identify(success, error);
 
       this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: 0});
       // aborting if B=0
       expect(this.requests).toEqual([]);
-      expect(this.srp.error).toHaveBeenCalled();
+      expect(error).toHaveBeenCalled();
+      expect(success).not.toHaveBeenCalled();
     });
   });
 

@@ -9,8 +9,10 @@ function SRP(remote, session)
   this.session = session;
 
   // Start the login process by identifying the user
-  this.identify = function()
+  this.identify = function(success, error)
   {
+    srp.success = success;
+    srp.error = error;
     remote.handshake(session, receive_salts);
 
     // Receive login salts from the server, start calculations
@@ -64,18 +66,10 @@ function SRP(remote, session)
   };
 
   // This function is called when authentication is successful.
-  // Developers can set this to other functions in specific implementations
-  // and change the functionality.
+  // It's a dummy. Please hand the real thing to the call to identify.
   this.success = function()
   {
-    var forward_url = document.getElementById("srp_forward").value;
-    if(forward_url.charAt(0) != "#")
-      window.location = forward_url;
-    else
-    {
-      window.location = forward_url;
-      alert("Login successful.");
-    }
+    alert("Login successful.");
   };
 };
 
