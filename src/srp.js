@@ -11,8 +11,7 @@ function SRP(remote, session)
   // Start the login process by identifying the user
   this.identify = function(success, error)
   {
-    srp.success = success;
-    srp.error = error;
+    store_callbacks(success, error);
     remote.handshake(session, receive_salts);
 
     // Receive login salts from the server, start calculations
@@ -45,8 +44,9 @@ function SRP(remote, session)
   };
 
   // Initiate the registration process
-  this.register = function()
+  this.register = function(success, error)
   {
+    store_callbacks(success, error);
     remote.register(session, srp.registered_user);
   };
 
@@ -71,5 +71,14 @@ function SRP(remote, session)
   {
     alert("Login successful.");
   };
+
+  function store_callbacks(success, error) {
+    if (typeof success == "function") {
+      srp.success = success;
+    }
+    if (typeof error == "function") {
+      srp.error = error;
+    }
+  }
 };
 
