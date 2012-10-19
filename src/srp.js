@@ -53,8 +53,10 @@ function SRP(remote, session)
   // The user has been registered successfully, now login
   this.registered_user = function(response)
   {
-    if(response.ok)
-    {
+    if(response.errors) {
+      srp.error(response.errors)
+    }
+    else {
       srp.identify();
     }
   };  
