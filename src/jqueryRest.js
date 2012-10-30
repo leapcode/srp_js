@@ -54,7 +54,7 @@ jqueryRest = function() {
 
   function sendVerifier(session, callback) {
     var salt = session.getSalt();
-    $.post("users", { user:
+    $.post("users.json", { user:
       { login: session.getI(),
         password_salt: salt,
         password_verifier: session.getV(salt).toString(16)}
@@ -62,13 +62,13 @@ jqueryRest = function() {
   }
 
   function handshake(session, callback) {
-    $.post("sessions", { login: session.getI(),
+    $.post("sessions.json", { login: session.getI(),
       A: session.getAstr()}, callback);
   }
 
   function authenticate(session, success) {
     $.ajax({
-      url: "sessions/" + session.getI(),
+      url: "sessions/" + session.getI() + ".json",
       type: 'PUT',
       data: {client_auth: session.getM()},
       success: success
