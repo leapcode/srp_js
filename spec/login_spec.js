@@ -52,9 +52,9 @@ describe("Login", function() {
       var success = sinon.spy();
       this.srp.identify(success);
 
-      this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
+      this.expectRequest('sessions.json', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: B});
-      this.expectRequest('sessions/'+login, 'client_auth='+M, 'PUT');
+      this.expectRequest('sessions/'+login+'.json', 'client_auth='+M, 'PUT');
       this.respondJSON({M2: M2});
 
       expect(success).toHaveBeenCalled();
@@ -65,7 +65,7 @@ describe("Login", function() {
       var error = sinon.spy();
       this.srp.identify(success, error);
 
-      this.expectRequest('sessions', 'login=' +login+ '&A=' +A, 'POST');
+      this.expectRequest('sessions.json', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: 0});
       // aborting if B=0
       expect(this.requests).toEqual([]);
