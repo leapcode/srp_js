@@ -15,7 +15,6 @@ describe("Session", function() {
   var session;
 
   beforeEach(function() {
-    var srp = new SRP(jqueryRest());
     session = new srp.Session(compare.username, compare.password);
   });
 
