@@ -30,11 +30,11 @@ var specHelper = (function() {
     request.respond(200, header, body);
   }
 
-  function respondJSON(object) {
+  function respondJSON(object, responseCode) {
     var request = this.requests.pop();
     header = { "Content-Type": "application/json;charset=utf-8" };
     body = JSON.stringify(object);
-    request.respond(200, header, body);
+    request.respond(responseCode || 200, header, body);
   }
 
   return {

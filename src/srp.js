@@ -2,8 +2,6 @@ function SRP(remote, session)
 {
   var srp = this;
   session = session || new this.Session();
-  remote = remote || new this.Remote();
-  remote.onError = remote.onError || this.error;
   session.onError = session.onError || this.error;
   this.remote = remote;
   this.session = session;
@@ -12,7 +10,9 @@ function SRP(remote, session)
   this.identify = function(success, error)
   {
     store_callbacks(success, error);
-    remote.handshake(session, receive_salts);
+    remote.handshake(session)
+    .success(receive_salts)
+    .error(srp.error);
 
     // Receive login salts from the server, start calculations
     function receive_salts(response)
@@ -28,7 +28,9 @@ function SRP(remote, session)
       else 
       {
         session.calculations(response.salt, response.B);
-        remote.authenticate(session, confirm_authentication);
+        remote.authenticate(session)
+        .success(confirm_authentication)
+        .error(srp.error);
       }
     }
 
@@ -47,12 +49,15 @@ function SRP(remote, session)
   this.register = function(success, error)
   {
     store_callbacks(success, error);
-    remote.register(session, srp.registered_user);
+    remote.register(session)
+    .success(srp.registered_user)
+    .error(srp.error);
   };
 
   // The user has been registered successfully, now login
   this.registered_user = function(response)
   {
+    // TODO: This can go if response has an error code
     if(response.errors) {
       srp.error(response.errors)
     }
@@ -61,17 +66,17 @@ function SRP(remote, session)
     }
   };  
 
-  // Minimal error handling - set remote.onError to sth better to overwrite.
-  this.error = function(text)
-  {
-    alert(text);
-  };
-
   // This function is called when authentication is successful.
   // It's a dummy. Please hand the real thing to the call to identify.
   this.success = function()
   {
     alert("Login successful.");
+  };
+
+  // Minimal error handling - set remote.onError to sth better to overwrite.
+  this.error = function(text)
+  {
+    alert(text);
   };
 
   function store_callbacks(success, error) {

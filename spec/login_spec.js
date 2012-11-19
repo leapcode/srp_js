@@ -48,7 +48,7 @@ describe("Login", function() {
       expect(this.srp.session.key()).toBe(K);
     });
 
-    it("works with JSON responses", function(){
+    it("authenticates successfully", function(){
       var success = sinon.spy();
       this.srp.identify(success);
 
@@ -60,6 +60,20 @@ describe("Login", function() {
       expect(success).toHaveBeenCalled();
     });
     
+    it("reports errors during handshake", function(){
+      this.srp.error = sinon.spy();
+      var error = {login: "something went wrong on the server side"};
+      this.srp.identify();
+
+      this.expectRequest('sessions.json', 'login=' +login+ '&A=' +A, 'POST');
+      this.respondJSON(error, 422);
+      //this.expectNoMoreRequests();
+
+      expect(this.srp.error).toHaveBeenCalled;
+      var args = this.srp.error.args[0];
+      expect($.parseJSON(args[0].responseText)).toEqual(error);
+    });
+    
     it("rejects B = 0", function(){
       var success = sinon.spy();
       var error = sinon.spy();
@@ -69,7 +83,7 @@ describe("Login", function() {
       this.respondJSON({salt: salt, B: 0});
       // aborting if B=0
       expect(this.requests).toEqual([]);
-      expect(error).toHaveBeenCalled();
+      expect(error).toHaveBeenCalledWith("Server send random number 0 - could not login.");
       expect(success).not.toHaveBeenCalled();
     });
   });

@@ -1,31 +1,30 @@
 jqueryRest = function() {
 
   // we do not fetch the salt from the server
-  function register(session, callback)
+  function register(session)
   {
-    sendVerifier(session, callback);
+    return sendVerifier(session);
   }
 
-  function sendVerifier(session, callback) {
+  function sendVerifier(session) {
     var salt = session.getSalt();
-    $.post("users.json", { user:
+    return $.post("users.json", { user:
       { login: session.getI(),
         password_salt: salt,
-        password_verifier: session.getV(salt).toString(16)}
-    }, callback);
+        password_verifier: session.getV(salt).toString(16)
+      }
+    });
   }
 
-  function handshake(session, callback) {
-    $.post("sessions.json", { login: session.getI(),
-      A: session.getAstr()}, callback);
+  function handshake(session) {
+    return $.post("sessions.json", { login: session.getI(), A: session.getAstr()});
   }
 
-  function authenticate(session, success) {
-    $.ajax({
+  function authenticate(session) {
+    return $.ajax({
       url: "sessions/" + session.getI() + ".json",
       type: 'PUT',
       data: {client_auth: session.getM()},
-      success: success
     });
   }
 
