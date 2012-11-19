@@ -1,51 +1,39 @@
-jqueryRest = function() {
-
-  // we do not fetch the salt from the server
-  function register(session)
-  {
-    return sendVerifier(session);
-  }
-
-  function sendVerifier(session) {
-    var salt = session.getSalt();
-    return $.post("users.json", { user:
-      { login: session.getI(),
-        password_salt: salt,
-        password_verifier: session.getV(salt).toString(16)
-      }
-    });
-  }
-
-  function handshake(session) {
-    return $.post("sessions.json", { login: session.getI(), A: session.getAstr()});
-  }
-
-  function authenticate(session) {
-    return $.ajax({
-      url: "sessions/" + session.getI() + ".json",
-      type: 'PUT',
-      data: {client_auth: session.getM()},
-    });
-  }
-
-  return {
-    register: register,
-    register_send_verifier: sendVerifier,
-    handshake: handshake,
-    authenticate: authenticate
-  };
-};
-
 srp.remote = (function(){
+  var jqueryRest = (function() {
+
+    // we do not fetch the salt from the server
+    function register(session) {
+      return $.post("users.json", { user: session.signup() });
+    }
+
+    function handshake(session) {
+      return $.post("sessions.json", session.handshake());
+    }
+
+    function authenticate(session) {
+      return $.ajax({
+        url: "sessions/" + session.getI() + ".json",
+        type: 'PUT',
+        data: {client_auth: session.getM()}
+      });
+    }
+
+    return {
+      register: register,
+      handshake: handshake,
+      authenticate: authenticate
+    };
+  }());
+
 
   function signup(){
-    jqueryRest().register(srp.session)
+    jqueryRest.register(srp.session)
     .success(srp.signedUp)
     .error(srp.error)
   };
 
   function login(){
-    jqueryRest().handshake(srp.session)
+    jqueryRest.handshake(srp.session)
     .success(receiveSalts)
     .error(srp.error)
   };
@@ -62,7 +50,7 @@ srp.remote = (function(){
     else 
     {
       srp.session.calculations(response.salt, response.B);
-      jqueryRest().authenticate(srp.session)
+      jqueryRest.authenticate(srp.session)
       .success(confirmAuthentication)
       .error(srp.error);
     }

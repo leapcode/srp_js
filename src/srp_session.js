@@ -35,6 +35,22 @@ srp.Session = function(login, password) {
     return Astr;
   };
 
+  this.signup = function() {
+    var salt = this.getSalt();
+    return {
+      login: this.getI(),
+      password_salt: salt,
+      password_verifier: this.getV(salt).toString(16)
+    };
+  };
+
+  this.handshake = function() {
+    return { 
+      login: this.getI(), 
+      A: this.getAstr()
+    };
+  };
+
   this.getAstr = function() {
     return Astr;
   }
