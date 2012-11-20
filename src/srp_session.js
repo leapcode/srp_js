@@ -21,8 +21,8 @@ srp.Session = function(login, password) {
   var M = null;
   var M2 = null;
   var authenticated = false;
-  var I = login || document.getElementById("srp_username").value;
-  var pass = password || document.getElementById("srp_password").value;
+  var I = login;
+  var pass = password;
 
   // *** Accessor methods ***
 
@@ -57,7 +57,14 @@ srp.Session = function(login, password) {
 
   // Returns the user's identity
   this.getI = function() {
+    I = I || document.getElementById("srp_username").value;
     return I;
+  };
+
+  // Returns the user's identity
+  this.getPass = function() {
+    pass = pass || document.getElementById("srp_password").value;
+    return pass;
   };
 
   // some 16 byte random number
@@ -77,7 +84,8 @@ srp.Session = function(login, password) {
 
   // Calculates the X value and return it as a BigInteger
   this.calcX = function(salt) {
-    return new BigInteger(SHA256(hex2a(salt + SHA256(I + ":" + pass))), 16);
+    var inner = salt + SHA256(this.getI() + ":" + this.getPass())
+    return new BigInteger(SHA256(hex2a(inner)), 16);
   };
 
   this.getV = function(salt)
