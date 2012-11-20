@@ -2,12 +2,12 @@ var srp = (function(){
 
   function signup()
   {
-    this.remote.signup();
+    srp.remote.signup();
   };
 
   function login()
   {
-    this.remote.login();
+    srp.remote.login();
   };
 
   return {
