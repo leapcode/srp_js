@@ -1,86 +1,18 @@
-function SRP(remote, session)
-{
-  var srp = this;
-  session = session || new this.Session();
-  remote = remote || new this.Remote();
-  remote.onError = remote.onError || this.error;
-  session.onError = session.onError || this.error;
-  this.remote = remote;
-  this.session = session;
+var srp = (function(){
 
-  // Start the login process by identifying the user
-  this.identify = function(success, error)
+  function signup()
   {
-    store_callbacks(success, error);
-    remote.handshake(session, receive_salts);
-
-    // Receive login salts from the server, start calculations
-    function receive_salts(response)
-    {
-      // B = 0 will make the algorithm always succeed
-      // -> refuse such a server answer
-      if(response.B === 0) {
-        srp.error("Server send random number 0 - could not login.");
-      }
-      else if(! response.salt || response.salt === 0) {
-        srp.error("Server failed to send salt - could not login.");
-      } 
-      else 
-      {
-        session.calculations(response.salt, response.B);
-        remote.authenticate(session, confirm_authentication);
-      }
-    }
-
-    // Receive M2 from the server and verify it
-    // If an error occurs, raise it as an alert.
-    function confirm_authentication(response)
-    {
-      if (session.validate(response.M2))
-        srp.success();
-      else
-        srp.error("Server key does not match");
-    };
+    this.remote.signup();
   };
 
-  // Initiate the registration process
-  this.register = function(success, error)
+  function login()
   {
-    store_callbacks(success, error);
-    remote.register(session, srp.registered_user);
+    this.remote.login();
   };
 
-  // The user has been registered successfully, now login
-  this.registered_user = function(response)
-  {
-    if(response.errors) {
-      srp.error(response.errors)
-    }
-    else {
-      srp.identify();
-    }
-  };  
-
-  // Minimal error handling - set remote.onError to sth better to overwrite.
-  this.error = function(text)
-  {
-    alert(text);
-  };
-
-  // This function is called when authentication is successful.
-  // It's a dummy. Please hand the real thing to the call to identify.
-  this.success = function()
-  {
-    alert("Login successful.");
-  };
-
-  function store_callbacks(success, error) {
-    if (typeof success == "function") {
-      srp.success = success;
-    }
-    if (typeof error == "function") {
-      srp.error = error;
-    }
+  return {
+    signup: signup,
+    login: login
   }
-};
+}());
 
