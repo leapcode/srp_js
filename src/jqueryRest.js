@@ -29,13 +29,13 @@ srp.remote = (function(){
   function signup(){
     jqueryRest.register(srp.session)
     .success(srp.signedUp)
-    .error(srp.error)
+    .error(error)
   };
 
   function login(){
     jqueryRest.handshake(srp.session)
     .success(receiveSalts)
-    .error(srp.error)
+    .error(error)
   };
 
   function receiveSalts(response){
@@ -52,7 +52,7 @@ srp.remote = (function(){
       srp.session.calculations(response.salt, response.B);
       jqueryRest.authenticate(srp.session)
       .success(confirmAuthentication)
-      .error(srp.error);
+      .error(error);
     }
   };
 
@@ -66,6 +66,12 @@ srp.remote = (function(){
       srp.error("Server key does not match");
   };
 
+  // The server will send error messages as json alongside
+  // the http error response.
+  function error(xhr)
+  { 
+    srp.error($.parseJSON(xhr.responseText))
+  };
 
   return {
     signup: signup,

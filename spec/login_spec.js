@@ -64,7 +64,7 @@ describe("Login with srp var", function() {
 
       expect(srp.error).toHaveBeenCalled;
       var args = srp.error.args[0];
-      expect($.parseJSON(args[0].responseText)).toEqual(error);
+      expect(args[0]).toEqual(error);
     });
     
     it("rejects B = 0", function(){
