@@ -3,16 +3,16 @@ srp.remote = (function(){
 
     // we do not fetch the salt from the server
     function register(session) {
-      return $.post("users.json", { user: session.signup() });
+      return $.post("/users.json", { user: session.signup() });
     }
 
     function handshake(session) {
-      return $.post("sessions.json", session.handshake());
+      return $.post("/sessions.json", session.handshake());
     }
 
     function authenticate(session) {
       return $.ajax({
-        url: "sessions/" + session.getI() + ".json",
+        url: "/sessions/" + session.getI() + ".json",
         type: 'PUT',
         data: {client_auth: session.getM()}
       });
