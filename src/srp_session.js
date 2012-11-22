@@ -57,13 +57,13 @@ srp.Session = function(login, password) {
 
   // Returns the user's identity
   this.getI = function() {
-    I = I || document.getElementById("srp_username").value;
+    I = login || document.getElementById("srp_username").value;
     return I;
   };
 
-  // Returns the user's identity
+  // Returns the password currently typed in
   this.getPass = function() {
-    pass = pass || document.getElementById("srp_password").value;
+    pass = password || document.getElementById("srp_password").value;
     return pass;
   };
 
