@@ -28,14 +28,14 @@ srp.remote = (function(){
 
   function signup(){
     jqueryRest.register(srp.session)
-    .success(srp.signedUp)
-    .error(error)
+    .done(srp.signedUp)
+    .fail(error)
   };
 
   function login(){
     jqueryRest.handshake(srp.session)
-    .success(receiveSalts)
-    .error(error)
+    .done(receiveSalts)
+    .fail(error)
   };
 
   function receiveSalts(response){
@@ -51,8 +51,8 @@ srp.remote = (function(){
     {
       srp.session.calculations(response.salt, response.B);
       jqueryRest.authenticate(srp.session)
-      .success(confirmAuthentication)
-      .error(error);
+      .done(confirmAuthentication)
+      .fail(error);
     }
   };
 
@@ -68,7 +68,7 @@ srp.remote = (function(){
 
   // The server will send error messages as json alongside
   // the http error response.
-  function error(xhr)
+  function error(xhr, text, thrown)
   { 
     srp.error($.parseJSON(xhr.responseText))
   };
