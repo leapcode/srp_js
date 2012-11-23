@@ -18,6 +18,9 @@ srp.remote = (function(){
       });
     }
 
+    function addSignupToForm(session) {
+    }
+
     return {
       register: register,
       handshake: handshake,
@@ -37,6 +40,17 @@ srp.remote = (function(){
     .done(receiveSalts)
     .fail(error)
   };
+
+  function addToForm(){
+    form = this.target;
+    $.each(srp.session.signup(), function(key, value) {
+      form.append($('<input/>', {
+        type: 'hidden',
+        name: key
+        value: value
+      }));
+    }
+  }
 
   function receiveSalts(response){
     // B = 0 will make the algorithm always succeed

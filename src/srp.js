@@ -10,9 +10,15 @@ var srp = (function(){
     srp.remote.login();
   };
 
+  function addToForm()
+  {
+    srp.remote.addToForm();
+  };
+
   return {
     signup: signup,
-    login: login
+    login: login,
+    addToForm: addToForm
   }
 }());
 
