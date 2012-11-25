@@ -1,9 +1,17 @@
 srp.remote = (function(){
   var jqueryRest = (function() {
 
-    // we do not fetch the salt from the server
+    // TODO: Do we need to differentiate between PUT and POST?
     function register(session) {
-      return $.post("/users.json", { user: session.signup() });
+      return $.post("/users.json", {user: session.signup() });
+    }
+
+    function update(url, session) {
+      return $.ajax({
+        url: url,
+        type: 'PUT',
+        data: {user: session.signup() }
+      });
     }
 
     function handshake(session) {
@@ -18,11 +26,9 @@ srp.remote = (function(){
       });
     }
 
-    function addSignupToForm(session) {
-    }
-
     return {
       register: register,
+      update: update,
       handshake: handshake,
       authenticate: authenticate
     };
@@ -35,22 +41,18 @@ srp.remote = (function(){
     .fail(error)
   };
 
+  function update(submitEvent){
+    var form = submitEvent.target;
+    jqueryRest.update(form.action, srp.session)
+    .done(srp.updated)
+    .fail(error)
+  };
+
   function login(){
     jqueryRest.handshake(srp.session)
     .done(receiveSalts)
     .fail(error)
   };
-
-  function addToForm(){
-    form = this.target;
-    $.each(srp.session.signup(), function(key, value) {
-      form.append($('<input/>', {
-        type: 'hidden',
-        name: key
-        value: value
-      }));
-    }
-  }
 
   function receiveSalts(response){
     // B = 0 will make the algorithm always succeed
@@ -92,6 +94,7 @@ srp.remote = (function(){
 
   return {
     signup: signup,
+    update: update,
     login: login
   }
 

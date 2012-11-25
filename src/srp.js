@@ -10,15 +10,15 @@ var srp = (function(){
     srp.remote.login();
   };
 
-  function addToForm()
+  function update(submitEvent)
   {
-    srp.remote.addToForm();
+    srp.remote.update(submitEvent);
   };
 
   return {
     signup: signup,
-    login: login,
-    addToForm: addToForm
+    update: update,
+    login: login
   }
 }());
 
