@@ -7,8 +7,7 @@ srp.Session = function(login, password) {
   var k = new BigInteger("bf66c44a428916cad64aa7c679f3fd897ad4c375e9bbb4cbf2f5de241d618ef0", 16);
 
   var rng = new SecureRandom();
-//  var a = new BigInteger(32, rng);
-  var a = new BigInteger("d498c3d024ec17689b5320e33fc349a3f3f91320384155b3043fa410c90eab71", 16);
+  var a = new BigInteger(32, rng);
   var A = g.modPow(a, N);
   while(A.mod(N) == 0)
   {
