@@ -1,4 +1,4 @@
-SRP.prototype.Session = function(login, password) {
+srp.Session = function(login, password) {
   
   // Variables session will be used in the SRP protocol
   var Nstr = "eeaf0ab9adb38dd69c33f80afa8fc5e86072618775ff3c0b9ea2314c9c256576d674df7496ea81d3383b4813d692c6e0e0d5d8e250b98be48e495c1d6089dad15dc7d7b46154d6b6ce8ef4ad69b15d4982559b297bcf1885c529f566660e57ec68edbc3c05726cc02fd4cbf4976eaa9afd5138fe8376435b9fc61d2fc0eb06e3";
@@ -7,8 +7,7 @@ SRP.prototype.Session = function(login, password) {
   var k = new BigInteger("bf66c44a428916cad64aa7c679f3fd897ad4c375e9bbb4cbf2f5de241d618ef0", 16);
 
   var rng = new SecureRandom();
-//  var a = new BigInteger(32, rng);
-  var a = new BigInteger("d498c3d024ec17689b5320e33fc349a3f3f91320384155b3043fa410c90eab71", 16);
+  var a = new BigInteger(32, rng);
   var A = g.modPow(a, N);
   while(A.mod(N) == 0)
   {
@@ -21,8 +20,8 @@ SRP.prototype.Session = function(login, password) {
   var M = null;
   var M2 = null;
   var authenticated = false;
-  var I = login || document.getElementById("srp_username").value;
-  var pass = password || document.getElementById("srp_password").value;
+  var I = login;
+  var pass = password;
 
   // *** Accessor methods ***
 
@@ -35,13 +34,36 @@ SRP.prototype.Session = function(login, password) {
     return Astr;
   };
 
+  this.signup = function() {
+    var salt = this.getSalt();
+    return {
+      login: this.getI(),
+      password_salt: salt,
+      password_verifier: this.getV(salt).toString(16)
+    };
+  };
+
+  this.handshake = function() {
+    return { 
+      login: this.getI(), 
+      A: this.getAstr()
+    };
+  };
+
   this.getAstr = function() {
     return Astr;
   }
 
   // Returns the user's identity
   this.getI = function() {
+    I = login || document.getElementById("srp_username").value;
     return I;
+  };
+
+  // Returns the password currently typed in
+  this.getPass = function() {
+    pass = password || document.getElementById("srp_password").value;
+    return pass;
   };
 
   // some 16 byte random number
@@ -61,7 +83,8 @@ SRP.prototype.Session = function(login, password) {
 
   // Calculates the X value and return it as a BigInteger
   this.calcX = function(salt) {
-    return new BigInteger(SHA256(hex2a(salt + SHA256(I + ":" + pass))), 16);
+    var inner = salt + SHA256(this.getI() + ":" + this.getPass())
+    return new BigInteger(SHA256(hex2a(inner)), 16);
   };
 
   this.getV = function(salt)
@@ -154,6 +177,5 @@ SRP.prototype.Session = function(login, password) {
     }
     return str;
   }
+};
 
-
-}

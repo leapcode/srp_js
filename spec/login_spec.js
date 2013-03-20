@@ -1,9 +1,4 @@
-describe("Login", function() {
-
-  it("has an identify function", function() {
-    var srp = new SRP(jqueryRest());
-    expect(typeof srp.identify).toBe('function');
-  });
+describe("Login with srp var", function() {
 
   describe("(Compatibility with py-srp)", function (){
     // these need to be the same as in the spec runner:
@@ -24,11 +19,9 @@ describe("Login", function() {
 
 
     beforeEach(function() {
-      this.srp = new SRP(jqueryRest());
-
       specHelper.setupFakeXHR.apply(this);
 
-      A_ = this.srp.session.calculateAndSetA(a)
+      A_ = srp.session.calculateAndSetA(a)
     });
 
     afterEach(function() {
@@ -40,37 +33,51 @@ describe("Login", function() {
     });
 
     it("calculates the same verifier", function(){
-      expect(this.srp.session.getV().toString(16)).toBe(V);
+      expect(srp.session.getV().toString(16)).toBe(V);
     });
 
     it("calculates the same key", function(){
-      this.srp.session.calculations(salt, B);
-      expect(this.srp.session.key()).toBe(K);
+      srp.session.calculations(salt, B);
+      expect(srp.session.key()).toBe(K);
     });
 
-    it("works with JSON responses", function(){
-      var success = sinon.spy();
-      this.srp.identify(success);
+    it("authenticates successfully", function(){
+      srp.loggedIn = sinon.spy();
+      srp.login();
 
-      this.expectRequest('sessions.json', 'login=' +login+ '&A=' +A, 'POST');
+      this.expectRequest('/sessions.json', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: B});
-      this.expectRequest('sessions/'+login+'.json', 'client_auth='+M, 'PUT');
+      this.expectRequest('/sessions/'+login+'.json', 'client_auth='+M, 'PUT');
       this.respondJSON({M2: M2});
 
-      expect(success).toHaveBeenCalled();
+      expect(srp.loggedIn).toHaveBeenCalled();
+    });
+    
+    it("reports errors during handshake", function(){
+      srp.error = sinon.spy();
+      var error = {login: "something went wrong on the server side"};
+      srp.login();
+
+      this.expectRequest('/sessions.json', 'login=' +login+ '&A=' +A, 'POST');
+      this.respondJSON(error, 422);
+      //this.expectNoMoreRequests();
+
+      expect(srp.error).toHaveBeenCalled;
+      var args = srp.error.args[0];
+      expect(args[0]).toEqual(error);
     });
     
     it("rejects B = 0", function(){
-      var success = sinon.spy();
-      var error = sinon.spy();
-      this.srp.identify(success, error);
+      srp.loggedIn = sinon.spy();
+      srp.error = sinon.spy();
+      srp.login();
 
-      this.expectRequest('sessions.json', 'login=' +login+ '&A=' +A, 'POST');
+      this.expectRequest('/sessions.json', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: 0});
       // aborting if B=0
       expect(this.requests).toEqual([]);
-      expect(error).toHaveBeenCalled();
-      expect(success).not.toHaveBeenCalled();
+      expect(srp.error).toHaveBeenCalledWith("Server send random number 0 - could not login.");
+      expect(srp.loggedIn).not.toHaveBeenCalled();
     });
   });
 
