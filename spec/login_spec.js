@@ -45,9 +45,9 @@ describe("Login with srp var", function() {
       srp.loggedIn = sinon.spy();
       srp.login();
 
-      this.expectRequest('sessions.json', 'login=' +login+ '&A=' +A, 'POST');
+      this.expectRequest('/sessions.json', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: B});
-      this.expectRequest('sessions/'+login+'.json', 'client_auth='+M, 'PUT');
+      this.expectRequest('/sessions/'+login+'.json', 'client_auth='+M, 'PUT');
       this.respondJSON({M2: M2});
 
       expect(srp.loggedIn).toHaveBeenCalled();
@@ -58,7 +58,7 @@ describe("Login with srp var", function() {
       var error = {login: "something went wrong on the server side"};
       srp.login();
 
-      this.expectRequest('sessions.json', 'login=' +login+ '&A=' +A, 'POST');
+      this.expectRequest('/sessions.json', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON(error, 422);
       //this.expectNoMoreRequests();
 
@@ -72,7 +72,7 @@ describe("Login with srp var", function() {
       srp.error = sinon.spy();
       srp.login();
 
-      this.expectRequest('sessions.json', 'login=' +login+ '&A=' +A, 'POST');
+      this.expectRequest('/sessions.json', 'login=' +login+ '&A=' +A, 'POST');
       this.respondJSON({salt: salt, B: 0});
       // aborting if B=0
       expect(this.requests).toEqual([]);

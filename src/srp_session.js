@@ -7,8 +7,7 @@ srp.Session = function(login, password) {
   var k = new BigInteger("bf66c44a428916cad64aa7c679f3fd897ad4c375e9bbb4cbf2f5de241d618ef0", 16);
 
   var rng = new SecureRandom();
-//  var a = new BigInteger(32, rng);
-  var a = new BigInteger("d498c3d024ec17689b5320e33fc349a3f3f91320384155b3043fa410c90eab71", 16);
+  var a = new BigInteger(32, rng);
   var A = g.modPow(a, N);
   while(A.mod(N) == 0)
   {
@@ -21,8 +20,8 @@ srp.Session = function(login, password) {
   var M = null;
   var M2 = null;
   var authenticated = false;
-  var I = login || document.getElementById("srp_username").value;
-  var pass = password || document.getElementById("srp_password").value;
+  var I = login;
+  var pass = password;
 
   // *** Accessor methods ***
 
@@ -57,7 +56,14 @@ srp.Session = function(login, password) {
 
   // Returns the user's identity
   this.getI = function() {
+    I = login || document.getElementById("srp_username").value;
     return I;
+  };
+
+  // Returns the password currently typed in
+  this.getPass = function() {
+    pass = password || document.getElementById("srp_password").value;
+    return pass;
   };
 
   // some 16 byte random number
@@ -77,7 +83,8 @@ srp.Session = function(login, password) {
 
   // Calculates the X value and return it as a BigInteger
   this.calcX = function(salt) {
-    return new BigInteger(SHA256(hex2a(salt + SHA256(I + ":" + pass))), 16);
+    var inner = salt + SHA256(this.getI() + ":" + this.getPass())
+    return new BigInteger(SHA256(hex2a(inner)), 16);
   };
 
   this.getV = function(salt)

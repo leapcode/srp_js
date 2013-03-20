@@ -1,18 +1,26 @@
 srp.remote = (function(){
   var jqueryRest = (function() {
 
-    // we do not fetch the salt from the server
+    // TODO: Do we need to differentiate between PUT and POST?
     function register(session) {
-      return $.post("users.json", { user: session.signup() });
+      return $.post("/users.json", {user: session.signup() });
+    }
+
+    function update(url, session) {
+      return $.ajax({
+        url: url,
+        type: 'PUT',
+        data: {user: session.signup() }
+      });
     }
 
     function handshake(session) {
-      return $.post("sessions.json", session.handshake());
+      return $.post("/sessions.json", session.handshake());
     }
 
     function authenticate(session) {
       return $.ajax({
-        url: "sessions/" + session.getI() + ".json",
+        url: "/sessions/" + session.getI() + ".json",
         type: 'PUT',
         data: {client_auth: session.getM()}
       });
@@ -20,6 +28,7 @@ srp.remote = (function(){
 
     return {
       register: register,
+      update: update,
       handshake: handshake,
       authenticate: authenticate
     };
@@ -28,14 +37,21 @@ srp.remote = (function(){
 
   function signup(){
     jqueryRest.register(srp.session)
-    .success(srp.signedUp)
-    .error(error)
+    .done(srp.signedUp)
+    .fail(error)
+  };
+
+  function update(submitEvent){
+    var form = submitEvent.target;
+    jqueryRest.update(form.action, srp.session)
+    .done(srp.updated)
+    .fail(error)
   };
 
   function login(){
     jqueryRest.handshake(srp.session)
-    .success(receiveSalts)
-    .error(error)
+    .done(receiveSalts)
+    .fail(error)
   };
 
   function receiveSalts(response){
@@ -51,8 +67,8 @@ srp.remote = (function(){
     {
       srp.session.calculations(response.salt, response.B);
       jqueryRest.authenticate(srp.session)
-      .success(confirmAuthentication)
-      .error(error);
+      .done(confirmAuthentication)
+      .fail(error);
     }
   };
 
@@ -68,13 +84,17 @@ srp.remote = (function(){
 
   // The server will send error messages as json alongside
   // the http error response.
-  function error(xhr)
+  function error(xhr, text, thrown)
   { 
-    srp.error($.parseJSON(xhr.responseText))
+    if (xhr.responseText && xhr.responseText != "")
+      srp.error($.parseJSON(xhr.responseText));
+    else
+      srp.error("Server did not respond.");
   };
 
   return {
     signup: signup,
+    update: update,
     login: login
   }
 
