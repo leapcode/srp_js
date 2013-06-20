@@ -121,10 +121,14 @@ srp.Session = function(login, password) {
     hexString += Astr;
     hexString += Bstr;
     hexString += K
-    M = SHA256(hex2a(hexString));
+    M = removeLeading0(SHA256(hex2a(hexString)));
     //M2 = H(A, M, K)
-    M2 = SHA256(hex2a(Astr + M + K));
+    M2 = removeLeading0(SHA256(hex2a(Astr + M + K)));
   };
+
+  this.getS = function() {
+    return S;
+  }
 
   this.getM = function() {
     return M;
@@ -161,8 +165,19 @@ srp.Session = function(login, password) {
     return retstring;
   };
 
+  function removeLeading0(hex) {
+    if (hex[0] == "0") {
+      return hex.substr(1);
+    } else {
+      return hex;
+    }
+  }
+
   function hex2a(hex) {
     var str = '';
+    if(hex.length % 2) {
+      hex = "0" + hex;
+    }
     for (var i = 0; i < hex.length; i += 2)
       str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
     return str;
