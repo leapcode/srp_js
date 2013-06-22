@@ -29,19 +29,19 @@ describe("Session", function() {
   var session;
 
   beforeEach(function() {
-    session = new srp.Session(compare.username, compare.password);
+    account = new srp.Account(compare.username, compare.password);
+    session = new srp.Session(account);
   });
 
-  it("has the proper username", function() {
-    expect(session.getI()).toBe(compare.username);
-  });
-
-  it("calculates the proper M", function() {
+  it("calculates the proper M (INTEGRATION)", function() {
     session.calculateAndSetA(compare.a);
     session.calculations(compare.salt, compare.bb);
     expect(session.getS().toString(16)).toBe(compare.s);
-    // failing from here on...
     expect(session.key()).toBe(compare.k);
     expect(session.getM()).toBe(compare.m);
+  });
+
+  it("delegates login", function() {
+    expect(session.login()).toBe(compare.username);
   });
 });
