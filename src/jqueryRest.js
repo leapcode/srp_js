@@ -20,7 +20,7 @@ srp.remote = (function(){
 
     function authenticate(session) {
       return $.ajax({
-        url: "/sessions/" + session.getI() + ".json",
+        url: "/sessions/" + session.login() + ".json",
         type: 'PUT',
         data: {client_auth: session.getM()}
       });

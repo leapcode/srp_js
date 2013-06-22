@@ -1,6 +1,7 @@
-srp.Session = function(login, password, calculate) {
+srp.Session = function(account, calculate) {
 
   // default for injected dependency
+  account = account || new srp.Account();
   calculate = calculate || new srp.Calculate();
 
   var a = calculate.randomEphemeral();
@@ -10,8 +11,6 @@ srp.Session = function(login, password, calculate) {
   var M = null;
   var M2 = null;
   var authenticated = false;
-  var I = login;
-  var pass = password;
 
   // *** Accessor methods ***
 
@@ -25,9 +24,9 @@ srp.Session = function(login, password, calculate) {
 
   this.signup = function() {
     var salt = calculate.randomSalt();
-    var x = calculate.X(this.getI(), this.getPass(), salt);
+    var x = calculate.X(account.login(), account.password(), salt);
     return {
-      login: this.getI(),
+      login: account.login(),
       password_salt: salt,
       password_verifier: calculate.V(x)
     };
@@ -35,7 +34,7 @@ srp.Session = function(login, password, calculate) {
 
   this.handshake = function() {
     return { 
-      login: this.getI(), 
+      login: account.login(), 
       A: this.getA()
     };
   };
@@ -44,17 +43,8 @@ srp.Session = function(login, password, calculate) {
     return A;
   }
 
-  // Returns the user's identity
-  this.getI = function() {
-    I = login || document.getElementById("srp_username").value;
-    return I;
-  };
-
-  // Returns the password currently typed in
-  this.getPass = function() {
-    pass = password || document.getElementById("srp_password").value;
-    return pass;
-  };
+  // Delegate login so it can be used when talking to the remote
+  this.login = account.login;
 
   // Calculate S, M, and M2
   // This is the client side of the SRP specification
@@ -62,13 +52,13 @@ srp.Session = function(login, password, calculate) {
   {    
     //S -> C: s | B
     var B = ephemeral;
-    var x = calculate.X(this.getI(), this.getPass(), salt);
+    var x = calculate.X(account.login(), account.password(), salt);
     S = calculate.S(a, A, B, x);
     K = calculate.K(S);
     
     // M = H(H(N) xor H(g), H(I), s, A, B, K)
     var xor = calculate.nXorG();
-    var hash_i = calculate.hash(I)
+    var hash_i = calculate.hash(account.login())
     M = calculate.hashHex(xor + hash_i + salt + A + B + K);
     //M2 = H(A, M, K)
     M2 = calculate.hashHex(A + M + K);

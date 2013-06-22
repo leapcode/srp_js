@@ -11,7 +11,7 @@ describe("Signup with srp var", function() {
     specHelper.setupFakeXHR.apply(this);
     calculate = new srp.Calculate();
     calculate.randomSalt = function() {return "4c78c3f8"};
-    srp.session = new srp.Session(undefined, undefined, calculate);
+    srp.session = new srp.Session(undefined, calculate);
   });
 
   afterEach(function() {
