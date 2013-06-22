@@ -1,9 +1,10 @@
-srp.Session = function(login, password, constants) {
-  
+srp.Session = function(login, password, calculate) {
 
-  var constants = constants || new srp.Constants();
-  var a = constants.randomEphemeral();
-  var A = constants.calcA(a);
+  // default for injected dependency
+  calculate = calculate || new srp.Calculate();
+
+  var a = calculate.randomEphemeral();
+  var A = calculate.A(a);
   var S = null;
   var K = null;
   var M = null;
@@ -18,17 +19,17 @@ srp.Session = function(login, password, constants) {
 
   this.calculateAndSetA = function(_a) {
     a = _a;
-    A = constants.calcA(_a);
+    A = calculate.A(_a);
     return A;
   };
 
   this.signup = function() {
-    var salt = constants.randomSalt();
-    var x = constants.calcX(this.getI(), this.getPass(), salt);
+    var salt = calculate.randomSalt();
+    var x = calculate.X(this.getI(), this.getPass(), salt);
     return {
       login: this.getI(),
       password_salt: salt,
-      password_verifier: constants.calcV(x)
+      password_verifier: calculate.V(x)
     };
   };
 
@@ -61,15 +62,16 @@ srp.Session = function(login, password, constants) {
   {    
     //S -> C: s | B
     var B = ephemeral;
-    var x = constants.calcX(this.getI(), this.getPass(), salt);
-    S = constants.calcS(a, A, B, x);
-    K = constants.calcK(S);
+    var x = calculate.X(this.getI(), this.getPass(), salt);
+    S = calculate.S(a, A, B, x);
+    K = calculate.K(S);
     
     // M = H(H(N) xor H(g), H(I), s, A, B, K)
-    var xor = constants.nXorG();
-    M = constants.hash(xor + SHA256(I) + salt + A + B + K);
+    var xor = calculate.nXorG();
+    var hash_i = calculate.hash(I)
+    M = calculate.hashHex(xor + hash_i + salt + A + B + K);
     //M2 = H(A, M, K)
-    M2 = constants.hash(A + M + K);
+    M2 = calculate.hashHex(A + M + K);
   };
 
 

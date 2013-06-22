@@ -9,9 +9,9 @@ describe("Signup with srp var", function() {
   
   beforeEach(function() {
     specHelper.setupFakeXHR.apply(this);
-    constants = new srp.Constants();
-    constants.randomSalt = function() {return "4c78c3f8"};
-    srp.session = new srp.Session(undefined, undefined, constants);
+    calculate = new srp.Calculate();
+    calculate.randomSalt = function() {return "4c78c3f8"};
+    srp.session = new srp.Session(undefined, undefined, calculate);
   });
 
   afterEach(function() {

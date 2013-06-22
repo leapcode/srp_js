@@ -1,7 +1,7 @@
-describe("Constants", function() {
+describe("Calculate", function() {
   
   beforeEach(function() {
-    constants = new srp.Constants();
+    calculate = new srp.Calculate();
   });
 
   // login attempt with correct password that failed never the less:
@@ -19,17 +19,17 @@ describe("Constants", function() {
   };
   
   it("calculates the proper A", function() {
-    expect(constants.calcA(compare.a)).toBe(compare.aa);
+    expect(calculate.A(compare.a)).toBe(compare.aa);
   });
   
   it("calculates the right x", function() {
-    x = constants.calcX("testuser","password","7686acb8")
+    x = calculate.X("testuser","password","7686acb8")
     expect(x).toBe('84d6bb567ddf584b1d8c8728289644d45dbfbb02deedd05c0f64db96740f0398');
   });
 
   it("calculates the right verifier", function() {
-    x = constants.calcX(compare.username, compare.password, compare.salt)
-    expect(constants.calcV(x)).toBe(compare.v);
+    x = calculate.X(compare.username, compare.password, compare.salt)
+    expect(calculate.V(x)).toBe(compare.v);
   });
   
 });
