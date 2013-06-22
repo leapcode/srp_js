@@ -32,10 +32,6 @@ describe("Login with srp var", function() {
       expect(A_).toBe(A);
     });
 
-    it("calculates the same verifier", function(){
-      expect(srp.session.getV(salt).toString(16)).toBe(V);
-    });
-
     it("calculates the same key", function(){
       srp.session.calculations(salt, B);
       expect(srp.session.key()).toBe(K);

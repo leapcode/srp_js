@@ -36,14 +36,6 @@ describe("Session", function() {
     expect(session.getI()).toBe(compare.username);
   });
 
-  it("calculates the proper verifier", function() {
-    expect(session.getV(compare.salt).toString(16)).toBe(compare.v);
-  });
-
-  it("calculates the proper A", function() {
-    expect(session.calculateAndSetA(compare.a)).toBe(compare.aa);
-  });
-
   it("calculates the proper M", function() {
     session.calculateAndSetA(compare.a);
     session.calculations(compare.salt, compare.bb);
