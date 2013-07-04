@@ -33,8 +33,8 @@ srp.Session = function(account, calculate) {
   };
 
   this.handshake = function() {
-    return { 
-      login: account.login(), 
+    return {
+      login: account.login(),
       A: this.getA()
     };
   };
@@ -43,19 +43,20 @@ srp.Session = function(account, calculate) {
     return A;
   }
 
-  // Delegate login so it can be used when talking to the remote
+  // Delegate login & id so they can be used when talking to the remote
   this.login = account.login;
+  this.id = account.id;
 
   // Calculate S, M, and M2
   // This is the client side of the SRP specification
   this.calculations = function(salt, ephemeral)
-  {    
+  {
     //S -> C: s | B
     var B = ephemeral;
     var x = calculate.X(account.login(), account.password(), salt);
     S = calculate.S(a, A, B, x);
     K = calculate.K(S);
-    
+
     // M = H(H(N) xor H(g), H(I), s, A, B, K)
     var xor = calculate.nXorG();
     var hash_i = calculate.hash(account.login())

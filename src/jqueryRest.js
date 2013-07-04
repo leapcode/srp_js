@@ -3,24 +3,24 @@ srp.remote = (function(){
 
     // TODO: Do we need to differentiate between PUT and POST?
     function register(session) {
-      return $.post("/users.json", {user: session.signup() });
+      return $.post("/1/users.json", {user: session.signup() });
     }
 
-    function update(url, session) {
+    function update(session) {
       return $.ajax({
-        url: url,
+        url: "/1/users/" + session.id() + ".json",
         type: 'PUT',
         data: {user: session.signup() }
       });
     }
 
     function handshake(session) {
-      return $.post("/sessions.json", session.handshake());
+      return $.post("/1/sessions.json", session.handshake());
     }
 
     function authenticate(session) {
       return $.ajax({
-        url: "/sessions/" + session.login() + ".json",
+        url: "/1/sessions/" + session.login() + ".json",
         type: 'PUT',
         data: {client_auth: session.getM()}
       });
@@ -43,7 +43,7 @@ srp.remote = (function(){
 
   function update(submitEvent){
     var form = submitEvent.target;
-    jqueryRest.update(form.action, srp.session)
+    jqueryRest.update(srp.session)
     .done(srp.updated)
     .fail(error)
   };
@@ -62,8 +62,8 @@ srp.remote = (function(){
     }
     else if(! response.salt || response.salt === 0) {
       srp.error("Server failed to send salt - could not login.");
-    } 
-    else 
+    }
+    else
     {
       srp.session.calculations(response.salt, response.B);
       jqueryRest.authenticate(srp.session)
@@ -85,7 +85,7 @@ srp.remote = (function(){
   // The server will send error messages as json alongside
   // the http error response.
   function error(xhr, text, thrown)
-  { 
+  {
     if (xhr.responseText && xhr.responseText != "")
       srp.error($.parseJSON(xhr.responseText));
     else
