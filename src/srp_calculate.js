@@ -54,7 +54,7 @@ srp.Calculate = function() {
   };
 
   this.hash = function(string) {
-    return removeLeading0(SHA256(string));
+    return SHA256(string);
   };
 
 
