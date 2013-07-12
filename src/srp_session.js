@@ -53,6 +53,7 @@ srp.Session = function(account, calculate) {
   {
     //S -> C: s | B
     var B = calculate.zeroPrefix(ephemeral);
+    salt = calculate.zeroPrefix(salt);
     var x = calculate.X(account.login(), account.password(), salt);
     S = calculate.S(a, A, B, x);
     K = calculate.K(S);
