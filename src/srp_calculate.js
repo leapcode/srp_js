@@ -9,7 +9,7 @@ srp.Calculate = function() {
 
   this.A = function(_a) { 
     a = new BigInteger(_a, 16);
-    return g.modPow(a, N).toString(16);
+    return zeroPrefix(g.modPow(a, N).toString(16));
   };
 
   // Calculates the X value
@@ -36,7 +36,7 @@ srp.Calculate = function() {
     var kgx = k.multiply(g.modPow(x, N));  
     var aux = a.add(u.multiply(x)); 
     
-    return B.subtract(kgx).modPow(aux, N).toString(16); 
+    return zeroPrefix(B.subtract(kgx).modPow(aux, N).toString(16)); 
   }
 
   this.K = function(_S) {
@@ -68,12 +68,13 @@ srp.Calculate = function() {
     {
       a = new BigInteger(32, rng);
     }
-    return a.toString(16);
+    return zeroPrefix(a.toString(16));
   };
   
   // some 16 byte random number
   this.randomSalt = function() {
-    return new BigInteger(64, rng).toString(16);
+    salt = new BigInteger(64, rng);
+    return zeroPrefix(salt.toString(16));
   }
 
   function hex2a(hex) {
@@ -85,6 +86,16 @@ srp.Calculate = function() {
       str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
     return str;
   }
+
+
+  function zeroPrefix(hex) {
+    if (hex.length % 2) {
+      return "0" + hex;
+    } else {
+      return hex;
+    }
+  }
+    
 
   function removeLeading0(hex) {
     if (hex[0] == "0") {

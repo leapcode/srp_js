@@ -22,6 +22,10 @@ describe("Calculate", function() {
     expect(calculate.A(compare.a)).toBe(compare.aa);
   });
   
+  it("prefixes A with 0 if needed", function() {
+    expect(calculate.A("3971782b")[0]).toBe("0");
+  });
+  
   it("calculates the right x", function() {
     x = calculate.X("testuser","password","7686acb8")
     expect(x).toBe('84d6bb567ddf584b1d8c8728289644d45dbfbb02deedd05c0f64db96740f0398');
