@@ -52,7 +52,7 @@ srp.Session = function(account, calculate) {
   this.calculations = function(salt, ephemeral)
   {
     //S -> C: s | B
-    var B = ephemeral;
+    var B = calculate.zeroPrefix(ephemeral);
     var x = calculate.X(account.login(), account.password(), salt);
     S = calculate.S(a, A, B, x);
     K = calculate.K(S);

@@ -13,7 +13,7 @@ describe("Session", function() {
   }
 
   // login attempt with correct password that failed never the less:
-  var compare = {
+  var zero_prefixed_m = {
     username: "blues",
     password: "justtest",
     salt: "6a6ef9ce5cb998eb",
@@ -26,14 +26,38 @@ describe("Session", function() {
     m: "0ccf0c492f715484dc8343e22cd5967c2c5d01de743c5f0a9c5cfd017db1804c"
   };
 
+  var short_b = {
+    "username": "fwe",
+    "password": "eckout -b ne",
+    "salt": "67f5f4aaf82a2a86",
+    "verifier": "d0624d86b8ce793e8570d0a8e31df50bb5bd7c6bf56926b00b10125c541d663324018be5a9c9ec794e44e1be739270d0fa258af0e15c780d47ff889c881c7a6b22fd201265471953f2788f08b2f95709602b1a47207241432226bba224285c8ed706d0a47a49eb06c111dfdafe01fe6ac3ab98c9a4958a00a136d9c069bea065",
+    "a": "b82dbaac",
+    "aa": "6e0197741d4da91a97adb05c705dae37a778d44cab697afdbcfc2450a5ccbc96dae1f4144a8446b53bfda65bc4ae4bc04c81f41f17da3389a5477bd8c5799538fffda2d745a4aa0381297c904b474d0525c2d08b4f70f7d3f9c1c52a0e126fc3402e37ea82aed603fe76fa2d8827e1e5d80996260a8aba6dc53e5e57dd7bd6a4",
+    "bb": "c9ffd5cb17e29aedf08fb37f54af2f4b798ce8341d8d1f36fde589e76f8aa2541118125d419632eef1582fb4fe7d5df4e795c808b0b2f964f67927b73be6f7545f2d291b9b36ab3d4b9fd0eb506f22887706b94c36ff963af44050bd89043d85b6f75846244785624fd2afb91ee1b5706b5a6f453f057be14537faa8051be56",
+    "s": "ca95b0d1223f4180f9b664d7aab69325263ee8700c02cbb7b3e67f1b08f94e11397f03faf186559602f9948305c73a6b69eb31770421f9e69757a3e4235e61197eab703e8378a290d70c335f5b4a39af402d9c68512def102737c5e70182645f3a1b9e8dcfea6eb4407a2bfbe1d923b6a7322e1b058e2f551f584ab12b61bc2b",
+    "k": "2cc2a0641bfd142a9c34b038c61e64a2298d1fd07de10fae945ad9b1a6172d19",
+    "m": "c3e3096ed1553a7dad36d600cee4e2f43fa67e306ae9771fc045d4f1b092d5e6",
+    "m2": "13bae65005e54e6ccfc5c5d04e143c4ff1124972875be6860aa8a99ab179ebf3"
+  }
+
   var session;
 
-  beforeEach(function() {
+  it("calculates the proper M even if that is 0 prefixed (INTEGRATION)", function() {
+    var compare = zero_prefixed_m;
     account = new srp.Account(compare.username, compare.password);
     session = new srp.Session(account);
+    session.calculateAndSetA(compare.a);
+    session.calculations(compare.salt, compare.bb);
+    expect(session.getS().toString(16)).toBe(compare.s);
+    expect(session.key()).toBe(compare.k);
+    expect(session.getM()).toBe(compare.m);
   });
-
-  it("calculates the proper M (INTEGRATION)", function() {
+  
+  it("calculates the proper M from a smaller B (INTEGRATION)", function() {
+    // B has one less char than usual
+    var compare = short_b;
+    account = new srp.Account(compare.username, compare.password);
+    session = new srp.Session(account);
     session.calculateAndSetA(compare.a);
     session.calculations(compare.salt, compare.bb);
     expect(session.getS().toString(16)).toBe(compare.s);
@@ -41,7 +65,11 @@ describe("Session", function() {
     expect(session.getM()).toBe(compare.m);
   });
 
+
   it("delegates login", function() {
+    var compare = zero_prefixed_m;
+    account = new srp.Account(compare.username, compare.password);
+    session = new srp.Session(account);
     expect(session.login()).toBe(compare.username);
   });
 });

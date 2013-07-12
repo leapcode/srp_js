@@ -73,9 +73,12 @@ srp.Calculate = function() {
   
   // some 16 byte random number
   this.randomSalt = function() {
-    salt = new BigInteger(64, rng);
+    var salt = new BigInteger(64, rng);
     return zeroPrefix(salt.toString(16));
   }
+
+  // expose zeroPrefix for received values.
+  this.zeroPrefix = zeroPrefix;
 
   function hex2a(hex) {
     var str = '';
