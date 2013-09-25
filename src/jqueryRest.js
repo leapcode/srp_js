@@ -6,10 +6,11 @@ srp.remote = (function(){
       return $.post("/1/users.json", {user: session.signup() });
     }
 
-    function update(session) {
+    function update(session, token) {
       return $.ajax({
         url: "/1/users/" + session.id() + ".json",
         type: 'PUT',
+        headers: { Authorization: 'Token token="' + token + '"' },
         data: {user: session.signup() }
       });
     }
@@ -43,7 +44,8 @@ srp.remote = (function(){
 
   function update(submitEvent){
     var form = submitEvent.target;
-    jqueryRest.update(srp.session)
+    var token = form.dataset.token;
+    jqueryRest.update(srp.session, token)
     .done(srp.updated)
     .fail(error)
   };
