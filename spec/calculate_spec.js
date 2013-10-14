@@ -32,8 +32,21 @@ describe("Calculate", function() {
   });
 
   it("calculates the right verifier", function() {
-    x = calculate.X(compare.username, compare.password, compare.salt)
-    expect(calculate.V(x)).toBe(compare.v);
+    calculate_and_compare_verifier(compare);
   });
-  
+
+  it("calculates the right verifier with umlauts", function() {
+    with_umlauts = {
+      username: "test_joakcq", 
+      password: "fs5uofäöìfvqynn",
+      salt: "eec1ff4c",
+      v: "551e82de8d61a6575a3da7fbede61f6f38164ed52eb64db031c1ec2316b474745d3ff24408bfcca3c50fc53283f2f975feebf1564d197051c834a56bf8bd804f3696d81e579915141f306242f133db210cbd11385afff01c355ca8446d92d8a54ff147ebb0e1cd3d5c78750a0488f1453473e9449a946c7c9298c167cc5adafc"
+    }
+    calculate_and_compare_verifier(with_umlauts);
+  });
+
+  function calculate_and_compare_verifier(values) {
+    x = calculate.X(values.username, values.password, values.salt)
+    expect(calculate.V(x)).toBe(values.v);
+  }
 });
