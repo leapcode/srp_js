@@ -11,7 +11,7 @@ srp.remote = (function(){
         url: "/1/users/" + session.id() + ".json",
         type: 'PUT',
         headers: { Authorization: 'Token token="' + token + '"' },
-        data: {user: session.signup() }
+        data: {user: session.update() }
       });
     }
 
