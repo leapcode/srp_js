@@ -42,3 +42,7 @@ var specHelper = (function() {
   }
 
 })();
+
+beforeEach(function () {
+  setFixtures("<form action='.' onsubmit='return register()'> <table> <tr><td>Username:</td><td><input type='text' id='srp_username' value='testuser' /></td></tr> <tr><td>Password:</td><td><input type='password' id='srp_password' value='password'/></td></tr> </table> <input type='submit'/> </form> ");
+});
