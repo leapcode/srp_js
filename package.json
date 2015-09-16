@@ -1,6 +1,6 @@
 {
   "name": "srp_js",
-  "version": "0.0.1",
+  "version": "0.4.0",
   "description": "A secure remote password implementation for JavaScript",
   "homepage": "https://github.com/leapcode/srp_js#readme",
   "main": "index.js",
