@@ -22,7 +22,7 @@ srp.Session = function(account, calculate) {
     return A;
   };
 
-  this.signup = function() {
+  this.update = function() {
     var salt = calculate.randomSalt();
     var x = calculate.X(account.login(), account.password(), salt);
     return {
@@ -30,6 +30,19 @@ srp.Session = function(account, calculate) {
       password_salt: salt,
       password_verifier: calculate.V(x)
     };
+  }
+
+  this.signup = function() {
+    var loginParams = this.update();
+
+    if (account.loginParams) {
+      var extraParams = account.loginParams();
+      for (var attr in extraParams) {
+        loginParams[attr] = extraParams[attr];
+      }
+    }
+
+    return loginParams;
   };
 
   this.handshake = function() {

@@ -72,4 +72,37 @@ describe("Session", function() {
     session = new srp.Session(account);
     expect(session.login()).toBe(compare.username);
   });
+
+  it('calculates secure user parameters for signup', function() {
+    var compare = short_b;
+    account = new srp.Account(compare.username, compare.password);
+    session = new srp.Session(account);
+
+    var signupParams = session.signup();
+
+    expect(Object.keys(signupParams)).toEqual(['login', 'password_salt', 'password_verifier']);
+  });
+
+  it('calculates secure user parameters for update', function() {
+    var compare = short_b;
+    account = new srp.Account(compare.username, compare.password);
+    session = new srp.Session(account);
+
+    var signupParams = session.update();
+
+    expect(Object.keys(signupParams)).toEqual(['login', 'password_salt', 'password_verifier']);
+  });
+
+  it("grabs extra signup parameters from account", function() {
+    account = jasmine.createSpyObj('account', ['login', 'password']);
+    account.loginParams = function() {
+      return {
+        "extraParam": "foobar"
+      }
+    }
+    session = new srp.Session(account);
+
+    expect(session.signup().extraParam).toBe("foobar");
+  });
+
 });
