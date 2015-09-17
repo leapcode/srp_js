@@ -42,6 +42,10 @@ describe("Login with srp var", function() {
     beforeEach(function() {
       specHelper.setupFakeXHR.apply(this);
 
+      calculate = new srp.Calculate();
+      calculate.randomSalt = function() {return "4c78c3f8"};
+      srp.session = new srp.Session(undefined, calculate);
+
       A_ = srp.session.calculateAndSetA(data.a)
       old_login = $('#srp_username').val();
       old_conf = $('#srp_password_confirmation').val();
@@ -68,7 +72,7 @@ describe("Login with srp var", function() {
     });
 
     it("authenticates successfully", function(){
-      srp.loggedIn = sinon.spy();
+      srp.loggedIn = jasmine.createSpy();
       srp.login();
 
       this.expectRequest('/1/sessions.json', 'login=' +data.username+ '&A=' +data.aa, 'POST');
@@ -80,7 +84,7 @@ describe("Login with srp var", function() {
     });
     
     it("reports errors during handshake", function(){
-      srp.error = sinon.spy();
+      srp.error = jasmine.createSpy();
       var error = {login: "something went wrong on the server side"};
       srp.login();
 
@@ -88,14 +92,12 @@ describe("Login with srp var", function() {
       this.respondJSON(error, 422);
       //this.expectNoMoreRequests();
 
-      expect(srp.error).toHaveBeenCalled;
-      var args = srp.error.args[0];
-      expect(args[0]).toEqual(error);
+      expect(srp.error).toHaveBeenCalledWith(error);
     });
     
     it("rejects B = 0", function(){
-      srp.loggedIn = sinon.spy();
-      srp.error = sinon.spy();
+      srp.loggedIn = jasmine.createSpy();
+      srp.error = jasmine.createSpy();
       srp.login();
 
       this.expectRequest('/1/sessions.json', 'login=' +data.username+ '&A=' +data.aa, 'POST');
